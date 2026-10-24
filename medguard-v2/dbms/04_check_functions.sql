@@ -1,6 +1,0 @@
--- File: dbms/04_check_functions.sql
--- Owner: Bhavya  (only the owner edits this file)
--- Purpose: The safety checks: chk_duplicate, chk_interaction, chk_allergy, chk_contraindication, chk_dose, fn_check_prescription (runs all five, ranked by severity) and fn_safe_alternatives (same indication, no conflicts).
--- Inputs: Patient id, brand id, dose, frequency.
--- Outputs: Ranked alert rows and a list of safer alternatives.
--- Depends on: 01_schema.sql, 03_lookup_functions.sql

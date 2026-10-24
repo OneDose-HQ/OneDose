@@ -1,6 +1,0 @@
--- File: dbms/02_seed_reference.sql
--- Owner: Sivani  (only the owner edits this file)
--- Purpose: Load the drug knowledge from data/*.csv and fill the small lookup tables (drug classes, indications, conditions, sources, demo clinicians).
--- Inputs: data/*.csv.
--- Outputs: Filled reference tables.
--- Depends on: 01_schema.sql, data/*.csv

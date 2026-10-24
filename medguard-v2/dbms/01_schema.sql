@@ -1,6 +1,0 @@
--- File: dbms/01_schema.sql
--- Owner: Bhavya  (only the owner edits this file)
--- Purpose: Create the whole database structure: all tables, primary and foreign keys, CHECK and UNIQUE constraints, basic indexes. Tables: ingredients, brands, brand_ingredients, drug_classes, ingredient_classes, indications, ingredient_indications, interactions, contraindications, dose_limits, conditions, sources, clinicians, patients, patient_allergies, patient_conditions, prescriptions, prescription_items, alerts, consents, rfid_cards, card_scans, audit_log. RUN THIS FIRST and share it with Sivani.
--- Inputs: none
--- Outputs: An empty database structure.
--- Depends on: none

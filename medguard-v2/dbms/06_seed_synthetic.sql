@@ -1,6 +1,0 @@
--- File: dbms/06_seed_synthetic.sql
--- Owner: Sivani  (only the owner edits this file)
--- Purpose: Generate fake patients, allergies, conditions and prescription items at scale for benchmarks. Everything here is synthetic.
--- Inputs: Reference data.
--- Outputs: Large fake dataset, then ANALYZE.
--- Depends on: 01_schema.sql, 02_seed_reference.sql

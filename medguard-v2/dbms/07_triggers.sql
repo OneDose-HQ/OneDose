@@ -1,6 +1,0 @@
--- File: dbms/07_triggers.sql
--- Owner: Bhavya  (only the owner edits this file)
--- Purpose: Automatic behaviour in the database: raise alerts when a prescription item is inserted, hash-chained audit log, audit triggers, block update/delete on the audit log.
--- Inputs: Inserts and updates on tables.
--- Outputs: Alert rows and audit rows.
--- Depends on: 01_schema.sql, 04_check_functions.sql

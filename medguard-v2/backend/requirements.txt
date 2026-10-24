@@ -1,6 +1,0 @@
-# File: backend/requirements.txt
-# Owner: Bhavya  (only the owner edits this file)
-# Purpose: List Python dependencies (fastapi, uvicorn, pydantic, pyjwt, httpx, python-dotenv, plus the database driver: psycopg for PostgreSQL or mysql-connector-python for MySQL, depending on the final database choice).
-# Inputs: none
-# Outputs: none
-# Depends on: none
