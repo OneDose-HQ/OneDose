@@ -1,1 +1,50 @@
 brand_id,brand_name,manufacturer,form,strength
+1,Dolo 650,Micro Labs Ltd,tablet,650 mg
+2,Crocin Advance,GlaxoSmithKline,tablet,500 mg
+3,Calpol 500,GlaxoSmithKline,tablet,500 mg
+4,Combiflam,Sanofi India,tablet,400 mg + 325 mg
+5,Brufen 400,Abbott,tablet,400 mg
+6,Voveran 50,Novartis,tablet,50 mg
+7,Ecosprin 75,USV Ltd,tablet,75 mg
+8,Disprin,Reckitt Benckiser,tablet,350 mg
+9,Augmentin 625,GlaxoSmithKline,tablet,500 mg + 125 mg
+10,Azithral 500,Alembic Pharmaceuticals,tablet,500 mg
+11,Ciplox 500,Cipla,tablet,500 mg
+12,Zifi 200,FDC Ltd,tablet,200 mg
+13,Metrogyl 400,J.B. Chemicals & Pharmaceuticals,tablet,400 mg
+14,Claribid 500,Pfizer,tablet,500 mg
+15,Plavix 75,Sanofi,tablet,75 mg
+16,Amlong 5,Micro Labs Ltd,tablet,5 mg
+17,Losar 50,Unichem Laboratories,tablet,50 mg
+18,Telma 40,Glenmark Pharmaceuticals,tablet,40 mg
+19,Envas 5,Cadila Pharmaceuticals,tablet,5 mg
+20,Metolar 50,Cipla,tablet,50 mg
+21,Aten 50,Zydus Cadila,tablet,50 mg
+22,Ciplar 40,Cipla,tablet,40 mg
+23,Calaptin 40,Abbott,tablet,40 mg
+24,Lasix 40,Sanofi India,tablet,40 mg
+25,Aldactone 25,RPG Life Sciences,tablet,25 mg
+26,Lanoxin 0.25,GlaxoSmithKline,tablet,0.25 mg
+27,Atorva 10,Zydus Cadila,tablet,10 mg
+28,Glycomet 500,USV Ltd,tablet,500 mg
+29,Pantop 40,Aristo Pharmaceuticals,tablet,40 mg
+30,Pan 40,Alkem Laboratories,tablet,40 mg
+31,Omez 20,Dr. Reddy's Laboratories,capsule,20 mg
+32,Eltroxin 50,GlaxoSmithKline,tablet,50 mcg
+33,Thyronorm 50,Abbott,tablet,50 mcg
+34,Cetzine 10,Dr. Reddy's Laboratories,tablet,10 mg
+35,Levocet 5,Hetero Healthcare,tablet,5 mg
+36,Allegra 120,Sanofi India,tablet,120 mg
+37,Montair 10,Cipla,tablet,10 mg
+38,Montair-LC,Cipla,tablet,10 mg + 5 mg
+39,Sinarest,Centaur Pharmaceuticals,tablet,500 mg + 10 mg + 2 mg
+40,Ultracet,Janssen,tablet,37.5 mg + 325 mg
+41,Tramazac 50,Zydus Cadila,capsule,50 mg
+42,Zoloft 50,Pfizer,tablet,50 mg
+43,Alprax 0.5,Torrent Pharmaceuticals,tablet,0.5 mg
+44,Viagra 50,Pfizer,tablet,50 mg
+45,Imdur 30,AstraZeneca,tablet,30 mg
+46,Shelcal 500,Torrent Pharmaceuticals,tablet,500 mg + 250 IU
+47,Folitrax 7.5,Ipca Laboratories,tablet,7.5 mg
+48,Warf 5,Cipla,tablet,5 mg
+49,Simvotin 20,Sun Pharma,tablet,20 mg

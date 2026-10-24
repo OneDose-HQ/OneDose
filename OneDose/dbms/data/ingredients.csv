@@ -1,1 +1,45 @@
-ingredient_id,name
+ingredient_id,name,atc_code
+1,paracetamol,N02BE01
+2,ibuprofen,M01AE01
+3,diclofenac,M01AB05
+4,aspirin,B01AC06
+5,amoxicillin,J01CA04
+6,clavulanic acid,J01CR02
+7,azithromycin,J01FA10
+8,ciprofloxacin,J01MA02
+9,cefixime,J01DD08
+10,metronidazole,P01AB01
+11,clarithromycin,J01FA09
+12,warfarin,B01AA03
+13,clopidogrel,B01AC04
+14,amlodipine,C08CA01
+15,losartan,C09CA01
+16,telmisartan,C09CA07
+17,enalapril,C09AA02
+18,metoprolol,C07AB02
+19,atenolol,C07AB03
+20,propranolol,C07AA05
+21,verapamil,C08DA01
+22,furosemide,C03CA01
+23,spironolactone,C03DA01
+24,digoxin,C01AA05
+25,atorvastatin,C10AA05
+26,simvastatin,C10AA01
+27,metformin,A10BA02
+28,pantoprazole,A02BC02
+29,omeprazole,A02BC01
+30,levothyroxine,H03AA01
+31,cetirizine,R06AE07
+32,levocetirizine,R06AE09
+33,fexofenadine,R06AX26
+34,montelukast,R03DC03
+35,phenylephrine,R01AA04
+36,chlorpheniramine,R06AB04
+37,tramadol,N02AX02
+38,sertraline,N06AB06
+39,alprazolam,N05BA12
+40,sildenafil,G04BE03
+41,isosorbide mononitrate,C01DA14
+42,calcium carbonate,A12AA04
+43,cholecalciferol,A11CC05
+44,methotrexate,L01BA01
