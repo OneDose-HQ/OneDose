@@ -1,0 +1,6 @@
+-- File: dbms/tests.sql
+-- Owner: Bhavya  (only the owner edits this file)
+-- Purpose: Prove every check works: about 15 scenarios with assertions (duplicate via combination tablet, class-level allergy, major interaction, dose over limit, safe alternative with no conflict).
+-- Inputs: Schema, functions, triggers.
+-- Outputs: Pass or fail for each scenario.
+-- Depends on: 01 to 08

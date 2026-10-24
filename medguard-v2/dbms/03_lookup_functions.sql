@@ -1,0 +1,6 @@
+-- File: dbms/03_lookup_functions.sql
+-- Owner: Sivani  (only the owner edits this file)
+-- Purpose: Helper functions: fn_class_descendants (recursive CTE over drug classes), fn_expand_brand (brand to ingredients), fn_search_brands (fuzzy brand search), fn_meds_as_of (medicines on a past date).
+-- Inputs: Class id, brand id, search text, patient id and date.
+-- Outputs: Rows for the checks and the API.
+-- Depends on: 01_schema.sql, 02_seed_reference.sql

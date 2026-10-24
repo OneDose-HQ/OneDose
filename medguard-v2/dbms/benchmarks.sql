@@ -1,0 +1,6 @@
+-- File: dbms/benchmarks.sql
+-- Owner: Sivani  (only the owner edits this file)
+-- Purpose: Measure speed: run EXPLAIN ANALYZE before indexes, create the indexes, run it again. Paste results into the pitch.
+-- Inputs: Synthetic dataset.
+-- Outputs: Before and after timings.
+-- Depends on: 06_seed_synthetic.sql

@@ -1,0 +1,6 @@
+-- File: dbms/08_security.sql
+-- Owner: Bhavya  (only the owner edits this file)
+-- Purpose: Who can see and do what: roles (clinician, pharmacist, admin), GRANT and REVOKE, access limited to patients with an unexpired consent, masked view for pharmacists.
+-- Inputs: none
+-- Outputs: Roles and access rules.
+-- Depends on: 01_schema.sql, 05_views.sql
