@@ -267,7 +267,8 @@ CREATE TABLE alerts (
     patient_id      bigint  NOT NULL REFERENCES patients(patient_id),
     clinician_id    integer REFERENCES clinicians(clinician_id),
     brand_id        integer NOT NULL REFERENCES brands(brand_id),   -- brand being prescribed
-    item_id         bigint  REFERENCES prescription_items(item_id), -- set once prescribed
+    item_id         bigint  REFERENCES prescription_items(item_id)  -- the item that raised it
+                            DEFERRABLE INITIALLY DEFERRED,           -- deferred: 07's BEFORE INSERT trigger writes alerts before the item row exists
     check_type      check_type NOT NULL,
     severity        severity_level NOT NULL,
     ingredient_id   integer REFERENCES ingredients(ingredient_id),  -- the new ingredient

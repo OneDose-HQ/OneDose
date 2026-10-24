@@ -19,7 +19,8 @@
 -- Severity rules
 --   duplicate        : major
 --   interaction      : taken from the interactions / class_interactions row
---   allergy          : critical for the exact ingredient, major for a drug-class allergy
+--   allergy          : critical for the exact ingredient; for a drug-class allergy, major or the
+--                      severity recorded on the patient's allergy, whichever is higher
 --   contraindication : taken from the contraindications row
 --   dose_limit       : critical at 1.5x the limit or more, otherwise major
 --
@@ -150,7 +151,7 @@ LANGUAGE sql STABLE AS $$
     SELECT DISTINCT
            'allergy'::check_type,
            CASE WHEN pa.ingredient_id IS NOT NULL THEN 'critical'::severity_level
-                ELSE 'major'::severity_level END,
+                ELSE GREATEST('major'::severity_level, coalesce(pa.severity, 'major'::severity_level)) END,
            i.ingredient_id, i.name,
            NULL::integer, NULL::text,
            NULL::bigint,
