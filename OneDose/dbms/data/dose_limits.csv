@@ -1,1 +1,21 @@
-ingredient_id,age_band,max_daily_mg,source
+ingredient_id,age_min_years,age_max_years,max_daily_mg,source
+1,18,65,4000.00,openFDA label
+1,65,200,3000.00,openFDA label (elderly threshold applied to age 65+)
+2,18,200,2400.00,openFDA label
+3,18,200,150.00,openFDA label
+27,18,200,2550.00,openFDA label
+14,18,200,10.00,openFDA label
+25,18,200,80.00,openFDA label
+26,18,200,40.00,openFDA label
+31,18,200,10.00,openFDA label
+32,18,200,5.00,openFDA label
+34,18,200,10.00,openFDA label
+33,18,200,180.00,openFDA label
+37,18,65,400.00,openFDA label
+37,65,200,300.00,openFDA label (label threshold age 75 applied conservatively to elderly band 65+)
+15,18,200,100.00,openFDA label
+16,18,200,80.00,openFDA label
+17,18,200,40.00,openFDA label
+19,18,200,100.00,openFDA label
+38,18,200,200.00,openFDA label
+39,18,200,4.00,openFDA label
