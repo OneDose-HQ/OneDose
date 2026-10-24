@@ -1,6 +1,17 @@
-// File: frontend/vite.config.js
-// Owner: Sivani  (only the owner edits this file)
-// Purpose: Dev server settings and a proxy that sends /api requests to the backend.
-// Inputs: none
-// Outputs: Dev server config.
-// Depends on: none
+// File: vite.config.js - Vite configuration with React plugin and API proxy
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+});
