@@ -1,0 +1,6 @@
+-- File: dbms/05_views.sql
+-- Owner: Sivani  (only the owner edits this file)
+-- Purpose: Read-only views for the API: v_active_medications, v_patient_summary, an alert-statistics view (override rate per check) and v_audit_recent.
+-- Inputs: Tables.
+-- Outputs: Views the backend reads.
+-- Depends on: 01_schema.sql
