@@ -1,6 +1,11 @@
-// File: frontend/src/main.jsx
-// Owner: Sivani  (only the owner edits this file)
-// Purpose: Entry point: mount App inside BrowserRouter, import Bootstrap CSS and styles.css.
-// Inputs: none
-// Outputs: The rendered app.
-// Depends on: App.jsx, styles.css
+// File: src/main.jsx - Application bootstrap rendering React DOM root
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+import './styles.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
