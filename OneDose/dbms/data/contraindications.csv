@@ -1,1 +1,17 @@
 ingredient_id,condition_name,severity,source
+2,peptic ulcer disease,major,DDInter
+3,peptic ulcer disease,major,DDInter
+4,peptic ulcer disease,major,DDInter
+2,chronic kidney disease,major,DDInter
+3,chronic kidney disease,major,DDInter
+2,heart failure,moderate,openFDA label
+3,heart failure,major,openFDA label
+4,asthma,moderate,openFDA label
+27,severe renal impairment,critical,openFDA label
+20,asthma,major,openFDA label
+17,pregnancy,critical,openFDA label
+15,pregnancy,critical,openFDA label
+16,pregnancy,critical,openFDA label
+12,pregnancy,critical,openFDA label
+37,epilepsy,major,openFDA label
+1,liver disease,moderate,openFDA label
