@@ -43,6 +43,9 @@ api.interceptors.response.use(
 // MOCK DATA STORE
 // ---------------------------------------------------------------------
 const isMockMode = import.meta.env.VITE_USE_MOCK === 'true';
+// Fake data is used ONLY when VITE_USE_MOCK=true. If the real server cannot be reached the user must be told,
+// never shown invented patients, alerts or a "saved" message.
+const NETWORK_ERROR = 'Cannot reach the OneDose server. Check your connection and try again.';
 
 const delay = (ms = 350) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -298,14 +301,7 @@ export async function login(email, password) {
     const res = await api.post('/auth/login', { email, password });
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      // Fallback to mock on connection refused
-      await delay(300);
-      return {
-        token: 'mock-jwt-token-fallback',
-        user: { name: 'Dr. Rao', role: 'clinician', email },
-      };
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Login failed');
   }
 }
@@ -322,12 +318,16 @@ export async function scanCard(hashedUid) {
     const res = await api.post('/scan', { uid_hash: hashedUid });
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      await delay(300);
-      return { patient: MOCK_PATIENTS[0] };
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Card scan failed');
   }
+}
+
+// The card reader posts to /scan and gets no patient back; the dashboard polls this to pick up the tap.
+export async function getLatestScan() {
+  if (isMockMode) return { scan_id: null, patient: null };
+  const res = await api.get('/scan/latest');
+  return res.data;
 }
 
 export async function getPatient(id) {
@@ -341,9 +341,7 @@ export async function getPatient(id) {
     const res = await api.get(`/patients/${id}`);
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      return MOCK_PATIENTS[0];
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Failed to fetch patient');
   }
 }
@@ -368,9 +366,7 @@ export async function getMedications(patientId, asOfDate) {
     const res = await api.get(`/patients/${patientId}/medications`, { params });
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      return MOCK_PATIENTS[0].active_medications;
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Failed to fetch medications');
   }
 }
@@ -391,10 +387,7 @@ export async function searchBrands(q) {
     const res = await api.get('/brands/search', { params: { q } });
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      const query = (q || '').toLowerCase().trim();
-      return MOCK_BRANDS.filter((b) => b.brand_name.toLowerCase().includes(query));
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Brand search failed');
   }
 }
@@ -483,10 +476,7 @@ export async function checkPrescription(payload) {
     const res = await api.post('/prescriptions/check', payload);
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      await delay(350);
-      return checkPrescription({ ...payload, brand_name: 'Combiflam' });
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Prescription check failed');
   }
 }
@@ -505,10 +495,7 @@ export async function createPrescription(payload) {
     const res = await api.post('/prescriptions', payload);
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      await delay(300);
-      return { success: true, prescription_id: 5001 };
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Failed to record prescription');
   }
 }
@@ -529,10 +516,7 @@ export async function overrideAlert(alertId, reason) {
     const res = await api.post(`/alerts/${alertId}/override`, { reason });
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      await delay(200);
-      return { success: true, alert_id: alertId, status: 'overridden', override_reason: reason };
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Failed to override alert');
   }
 }
@@ -574,10 +558,7 @@ export async function getOverrideStats() {
     const res = await api.get('/analytics/overrides');
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      await delay(250);
-      return getOverrideStats();
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Failed to fetch analytics');
   }
 }
@@ -633,9 +614,7 @@ export async function getAuditLog() {
     const res = await api.get('/analytics/audit');
     return res.data;
   } catch (err) {
-    if (!err.response) {
-      return getAuditLog();
-    }
+    if (!err.response) throw new Error(NETWORK_ERROR);
     throw new Error(err.response?.data?.detail || err.message || 'Failed to fetch audit log');
   }
 }
