@@ -43,9 +43,9 @@ export default function PatientCard({ patient }) {
     active_medications = [],
   } = patient;
 
-  const displayId = id || patient_id || 10482;
-  const sexCode = (sex || 'F').charAt(0).toUpperCase();
-  const consentText = consent_status || (has_active_consent ? 'Consent active until 14 Mar 2027' : 'Consent expired');
+  const displayId = id || patient_id;
+  const sexCode = sex ? sex.charAt(0).toUpperCase() : '';  // the pharmacist's masked view sends no sex
+  const consentText = consent_status || (has_active_consent ? 'Consent active' : 'No active consent');
 
   return (
     <div className="od-card">
@@ -73,7 +73,7 @@ export default function PatientCard({ patient }) {
             {full_name}
           </div>
           <div className="mono" style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
-            {age_years} {sexCode} · P-{displayId}
+            {age_years}{sexCode ? ` ${sexCode}` : ''} · P-{displayId}
           </div>
         </div>
       </div>

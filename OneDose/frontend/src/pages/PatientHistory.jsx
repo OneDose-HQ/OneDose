@@ -40,7 +40,8 @@ export default function PatientHistory() {
 
   // Load patient if needed from route
   useEffect(() => {
-    const targetId = patientId || selectedPatient?.patient_id || selectedPatient?.id || 10482;
+    const targetId = patientId || selectedPatient?.patient_id || selectedPatient?.id;
+    if (!targetId) return;
     if (!patient || (patient.id !== Number(targetId) && patient.patient_id !== Number(targetId))) {
       getPatient(targetId).then((data) => {
         setPatient(data);
@@ -52,7 +53,7 @@ export default function PatientHistory() {
   // Load medications when selectedDateStr or patient changes with 300ms debounce
   useEffect(() => {
     if (!patient) return;
-    const targetId = patient.patient_id || patient.id || 10482;
+    const targetId = patient.patient_id || patient.id;
 
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(async () => {
@@ -100,6 +101,9 @@ export default function PatientHistory() {
       </div>
 
       {/* Patient Profile Strip */}
+      {!patient && (
+        <p style={{ padding: '24px', color: 'var(--muted)' }}>No patient selected. Tap a card on the Prescribe page first.</p>
+      )}
       {patient && (
         <div className="od-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

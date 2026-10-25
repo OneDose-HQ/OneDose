@@ -69,7 +69,7 @@ function Navbar() {
   }
 
   const role = auth?.user?.role || 'clinician';
-  const name = auth?.user?.name || 'Dr. Rao';
+  const name = auth?.user?.name || 'Clinician';
   const roleDisplay = role.charAt(0).toUpperCase() + role.slice(1);
   const isPharmacist = role === 'pharmacist';
   const canViewAnalytics = role === 'admin' || role === 'clinician';

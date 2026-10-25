@@ -72,8 +72,8 @@ export default function Login() {
   const navigate = useNavigate();
   const { loginAuth, addToast } = useApp();
 
-  const [email, setEmail] = useState('shruti.kapoor@cedar.example');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -107,9 +107,9 @@ export default function Login() {
   const handleDemoClinician = async () => {
     setLoading(true);
     try {
-      const data = await login('dr.rao@onedose.local', 'clinician123');
+      const data = await login('dr_demo@onedose.local', 'clinician123');
       loginAuth(data);
-      addToast('Signed in as Dr. Rao (Demo Clinician)', 'success');
+      addToast('Signed in as the demo clinician', 'success');
       navigate('/prescribe');
     } catch (err) {
       setApiError('Could not sign in with demo credentials');

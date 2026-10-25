@@ -1,17 +1,17 @@
 // File: src/pages/Prescribe.jsx - Three-column interactive prescription safety dashboard matching Image 3
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../App.jsx';
 import PatientCard from '../components/PatientCard.jsx';
 import BrandSearch from '../components/BrandSearch.jsx';
 import AlertPanel from '../components/AlertPanel.jsx';
 import SqlPeek from '../components/SqlPeek.jsx';
-import { scanCard, checkPrescription, createPrescription, overrideAlert, getPatient } from '../api.js';
+import { scanCard, getLatestScan, checkPrescription, createPrescription, overrideAlert, getPatient } from '../api.js';
 import { validatePrescription, validateCardId } from '../validators.js';
 
 export default function Prescribe() {
   const { auth, selectedPatient, setSelectedPatient, addToast } = useApp();
 
-  const [cardIdInput, setCardIdInput] = useState('A4F9-22C1');
+  const [cardIdInput, setCardIdInput] = useState('DEMO-CARD-001');
   const [selectedBrand, setSelectedBrand] = useState({
     brand_id: 4,
     brand_name: 'Combiflam',
@@ -38,14 +38,32 @@ export default function Prescribe() {
 
   const isPharmacist = auth?.user?.role === 'pharmacist';
 
-  // Load Meera Nair as initial default patient if none loaded (matching Image 3)
+  // Pick up a tap on the physical card reader. The reader posts to /scan; the dashboard polls /scan/latest.
+  const lastScanId = useRef(null);
   useEffect(() => {
-    if (!selectedPatient) {
-      scanCard('A4F9-22C1').then(({ patient }) => {
-        setSelectedPatient(patient);
-      });
-    }
-  }, []);
+    if (auth?.user?.role !== 'clinician') return undefined;
+    let stopped = false;
+    const poll = async () => {
+      try {
+        const res = await getLatestScan();
+        if (stopped || !res || !res.scan_id) return;
+        if (lastScanId.current === null) { lastScanId.current = res.scan_id; return; } // ignore a tap from before this page opened
+        if (res.scan_id !== lastScanId.current && res.patient) {
+          lastScanId.current = res.scan_id;
+          setSelectedPatient(res.patient);
+          addToast(`Card tapped: ${res.patient.full_name} loaded`, 'success');
+          setAlerts([]);
+          setAlternatives([]);
+          setHasChecked(false);
+        }
+      } catch (err) {
+        // the reader is optional: a failed poll is ignored, the next one tries again
+      }
+    };
+    poll();
+    const timer = setInterval(poll, 2500);
+    return () => { stopped = true; clearInterval(timer); };
+  }, [auth?.user?.role]);
 
   // Run initial check once patient and brand are both loaded to match Image 3 exactly
   useEffect(() => {
@@ -235,7 +253,7 @@ export default function Prescribe() {
                 className="form-control mono"
                 value={cardIdInput}
                 onChange={(e) => setCardIdInput(e.target.value)}
-                placeholder="A4F9-22C1"
+                placeholder="DEMO-CARD-001"
               />
             </div>
 
@@ -260,9 +278,14 @@ export default function Prescribe() {
                 onChange={handleSelectDemoPatient}
                 value={selectedPatient?.card_id || ''}
               >
-                <option value="A4F9-22C1">Demo 1: Meera Nair (68 F, CKD, Aspirin active)</option>
-                <option value="B7C2-91D4">Demo 2: Arun Patel (45 M, Dolo 650 active)</option>
-                <option value="C3E8-44A9">Demo 3: Priya Sharma (28 F, Pregnant)</option>
+                <option value="">Demo patients (synthetic)...</option>
+                <option value="DEMO-CARD-001">Demo A: 68 y, on warfarin, penicillin allergy</option>
+                <option value="DEMO-CARD-002">Demo B: 45 y, Dolo 650 active</option>
+                <option value="DEMO-CARD-003">Demo C: 62 y, kidney disease, Losar 50</option>
+                <option value="DEMO-CARD-004">Demo D: 78 y, Tramazac 50</option>
+                <option value="DEMO-CARD-005">Demo E: 34 y, Zoloft 50</option>
+                <option value="DEMO-CARD-006">Demo F: 29 y, no medicines</option>
+                <option value="DEMO-CARD-007">Demo G: 28 y, pregnant</option>
               </select>
             </div>
           </div>
