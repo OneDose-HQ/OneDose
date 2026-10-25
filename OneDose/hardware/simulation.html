@@ -1,0 +1,271 @@
+<!--
+File: hardware/simulation.html
+Owner: Sivani
+Purpose: browser-only simulation of the OneDose card scanner (ESP32 + RC522 reads a card, hashes the ID, sends it to the backend /scan, shows a green or red LED)
+Inputs: none (open in a browser)
+Outputs: animation only
+Depends on: nothing (standalone)
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OneDose Hardware Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F7FB;--ink:#0B1F33;--mut:#4A5B6E;--card:#EAF0F7;--line:#D5DEE9;--teal:#0E9F8E;--navy:#0B1F33;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);overflow-x:hidden}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A1522;--ink:#E6EDF5;--mut:#9FB0C2;--card:#122236;--line:#223A55}}
+:root[data-theme="dark"]{--bg:#0A1522;--ink:#E6EDF5;--mut:#9FB0C2;--card:#122236;--line:#223A55}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,sans-serif;overflow-x:hidden}
+header{display:flex;align-items:center;gap:12px;padding:16px 24px;flex-wrap:wrap}
+.badge{margin-left:auto;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--card);color:var(--mut);border:1px solid var(--line)}
+h1{margin:0;font-size:20px;font-weight:700;line-height:1.2}
+.sub{color:var(--mut);font-size:13px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;padding:0 24px 16px;max-width:1500px;margin:0 auto}
+.stage{position:relative;height:min(74vh,720px);min-height:460px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+canvas#c{display:block;width:100%;height:100%;touch-action:none}
+svg.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+svg.ov line{stroke:#0E9F8E;stroke-width:1.5}
+.lb{position:absolute;left:0;top:0;white-space:nowrap;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--navy);color:#fff;pointer-events:none;transition:opacity .2s,background .2s}
+.lb.on{background:var(--teal)}
+.dot{position:absolute;left:0;top:0;width:7px;height:7px;border-radius:50%;background:#0E9F8E;border:1.5px solid #fff;pointer-events:none}
+.tools{position:absolute;top:12px;left:12px;right:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.vb,.btn{font:600 13px Inter,sans-serif;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.vb[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sw{margin-left:auto;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-weight:600;font-size:13px}
+.flow{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:12px;font-weight:600}
+.nd{padding:6px 12px;border-radius:999px;background:var(--bg);border:1px solid var(--line);transition:all .25s}
+.nd.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.nd.bad{background:#C62828;border-color:#C62828;color:#fff}
+.ar{color:var(--mut)}
+.panel{background:var(--navy);color:#fff;border-radius:14px;padding:20px;align-self:start}
+.panel h2{margin:0 0 4px;font-size:16px}
+.panel .hint{color:#B8C7D8;font-size:12px;margin:0 0 14px}
+ol{list-style:none;margin:0 0 16px;padding:0}
+li{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:10px 0;border-top:1px solid #1E3650;opacity:.55}
+li b{width:26px;height:26px;border-radius:50%;background:#1E3650;display:flex;align-items:center;justify-content:center;font-size:12px}
+li p{margin:4px 0 0;color:#C8D5E3;font-size:13px}
+li code{display:block;margin-top:6px;font:12px ui-monospace,Menlo,monospace;color:#8FE5D8;word-break:break-word}
+li.active,li.done,li.fail{opacity:1}
+li.active b{background:var(--teal)}li.done b{background:#14653A}li.fail b{background:#C62828}
+li.fail code{color:#FFB4B4}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn.p{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.panel label{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:13px;color:#C8D5E3;min-height:32px}
+:focus-visible{outline:2px solid #0E9F8E;outline-offset:2px}
+footer{padding:8px 24px 24px;text-align:center;color:var(--mut);font-size:12px}
+@media (max-width:900px){.app{grid-template-columns:1fr;padding:0 16px 16px}.stage{height:60vh;min-height:400px}header{padding:14px 16px}.lb{font-size:11px;padding:2px 8px}}
+</style>
+</head>
+<body>
+<header>
+<canvas id="hl" width="68" height="68" style="width:34px;height:34px" aria-hidden="true"></canvas>
+<div><h1>OneDose Reader</h1><div class="sub">Interactive 3D simulation: ESP32 + RC522 patient-card reader</div></div>
+<span class="badge">Simulation only: no real hardware or backend is connected.</span>
+</header>
+<div class="app">
+<div class="stage" id="stage">
+<canvas id="c" aria-label="3D model of the OneDose Reader. Drag to orbit."></canvas>
+<svg class="ov" id="ov" aria-hidden="true"></svg>
+<div class="tools">
+<button class="vb" data-v="closed" aria-pressed="true">Closed view</button>
+<button class="vb" data-v="cut" aria-pressed="false">Cutaway view</button>
+<button class="vb" data-v="exp" aria-pressed="false">Exploded view</button>
+<label class="sw"><input type="checkbox" id="lbt" checked> Labels</label>
+</div>
+<div class="flow" id="flow" aria-hidden="true"></div>
+</div>
+<aside class="panel">
+<h2>Data flow</h2>
+<p class="hint">From card tap to patient on screen. UID is salted and hashed before sending to /scan.</p>
+<ol id="steps" aria-live="polite"></ol>
+<div class="row">
+<button class="btn p" id="tap">Tap card</button>
+<button class="btn" id="stp">Step</button>
+<button class="btn" id="rep">Replay</button>
+</div>
+<label><input type="checkbox" id="fail"> Simulate failure (no consent)</label>
+</aside>
+</div>
+<footer>Concept simulation. All data is synthetic.</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(()=>{
+try{
+const $=s=>document.querySelector(s),V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const testCv=document.createElement('canvas'),gl=testCv.getContext('webgl')||testCv.getContext('experimental-webgl');
+if(!gl||typeof THREE==='undefined')throw new Error('WebGL or THREE.js unavailable');
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches,NS='http://www.w3.org/2000/svg';
+const stage=$('#stage'),ov=$('#ov');
+const STEPS=[
+["Card UID read over SPI","The RC522 powers the card through its antenna and reads the card’s unique ID over the SPI wires.","UID 04:A3:5B:1C"],
+["ESP32 hashes UID with salt","The raw UID never leaves the device; ESP32 hashes UID with a salt using SHA-256.","SHA-256(UID + salt) → 9f2e41c7…"],
+["POST /scan with device key","POST device ID and salted hash to /scan with device key over HTTPS.","POST /scan {device_id, hash, key}"],
+["FastAPI checks consent","The API confirms the patient’s consent is active before it touches any record.","consent: active until 14 Mar 2027"],
+["PostgreSQL returns the patient","SQL functions look up the hashed card and return the patient and active medicines.","P-10482 · 4 active medicines"],
+["Dashboard loads patient (green LED)","The clinician’s screen displays the patient; green LED confirms success with 2s debounce.","Patient loaded · Green LED"]];
+/* ---------- drawing helpers ---------- */
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function cap(c,x,y,T,L,phi,a,b){c.save();c.translate(x,y);c.rotate(phi);rr(c,-T/2,-L/2,T,L,T/2);c.save();c.clip();c.fillStyle=a;c.fillRect(-T,0,2*T,L);c.fillStyle=b;c.fillRect(-T,-L,2*T,L);c.restore();c.lineWidth=T*.09;c.strokeStyle='#fff';c.stroke();c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=T*.07;c.lineCap='round';c.beginPath();c.moveTo(-T*.25,-L*.38);c.lineTo(-T*.25,-L*.1);c.stroke();c.restore()}
+function logo(c,cx,cy,s){c.fillStyle='#D3D8DE';c.beginPath();c.arc(cx,cy,s*.95,0,7);c.fill();
+const g=c.createLinearGradient(0,cy+s*.2,0,cy+s*.8);g.addColorStop(0,'#2E9E3F');g.addColorStop(1,'#0B3D1E');
+cap(c,cx-s*.35,cy+s*.3,s*.62,s*1.5,1.05,g,'#EEF5EF');
+const t=c.createLinearGradient(0,cy-s*.9,0,cy-s*.1);t.addColorStop(0,'#0B1F33');t.addColorStop(1,'#1E5B73');
+cap(c,cx+s*.42,cy-s*.15,s*.62,s*1.7,0,'#E3F1F4',t)}
+const hc=$('#hl').getContext('2d');logo(hc,34,34,26);
+function tex(w,h,fn){const cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');fn(c,w,h);const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t}
+/* ---------- renderer ---------- */
+const canvas=$('#c'),renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.setClearColor(0,0);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(32,1,.1,100);
+const controls=new THREE.OrbitControls(camera,canvas);Object.assign(controls,{enableDamping:true,enablePan:false,minDistance:8,maxDistance:36,maxPolarAngle:1.5});
+scene.add(new THREE.HemisphereLight(0xffffff,0xaebccc,.72));
+const sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(6,12,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12});scene.add(sun);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.ShadowMaterial({opacity:.16}));floor.rotation.x=-Math.PI/2;floor.position.y=-.46;floor.receiveShadow=true;scene.add(floor);
+const M=(c,r=.5,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const BM=(map,o={})=>new THREE.MeshBasicMaterial(Object.assign({map,transparent:true},o));
+const fade=[];function F(m,t){fade.push({m,t:!!t});return m}
+/* ---------- shell ---------- */
+const shell=new THREE.Group();scene.add(shell);
+const prof=new THREE.Shape();prof.moveTo(-4,0);prof.lineTo(4,0);prof.lineTo(4,1.4);prof.lineTo(-4,3.4);prof.closePath();
+const bg=new THREE.ExtrudeGeometry(prof,{depth:6,bevelEnabled:true,bevelThickness:.25,bevelSize:.25,bevelSegments:5,steps:1});bg.translate(0,0,-3);bg.rotateY(-Math.PI/2);
+const body=new THREE.Mesh(bg,F(M(0xF2F4F6,.65)));body.castShadow=true;shell.add(body);
+const base=new THREE.Mesh(new THREE.BoxGeometry(5.8,.3,7.6),M(0x1C242D,.9));base.position.y=-.3;scene.add(base);
+const tp=new THREE.Group();tp.position.set(0,2.59,.26);tp.rotation.x=-Math.PI/2+Math.atan(.25);shell.add(tp);
+function plane(w,h,mat,x,y,z,circ){const m=new THREE.Mesh(circ?new THREE.CircleGeometry(w,64):new THREE.PlaneGeometry(w,h),mat);m.position.set(x,y,z);tp.add(m);return m}
+plane(1.6,0,F(M(0x0A141D,.15,.3)),0,-.5,.012,1);
+plane(1.6,0,F(BM(tex(256,256,(c)=>{c.strokeStyle='rgba(159,216,207,.7)';c.lineWidth=12;c.lineCap='round';[40,72,104].forEach(r=>{c.beginPath();c.arc(78,128,r,-.9,.9);c.stroke()});c.fillStyle='rgba(159,216,207,.7)';c.beginPath();c.arc(78,128,9,0,7);c.fill()})),true),0,-.5,.02,1);
+const ledMat=new THREE.MeshBasicMaterial({color:0xE8EDF2,side:THREE.DoubleSide});
+{const r=new THREE.Mesh(new THREE.RingGeometry(1.7,1.86,64),ledMat);r.position.set(0,-.5,.016);tp.add(r)}
+plane(3,.78,F(M(0x05090D,.4)),0,2.7,.01);
+const oc=document.createElement('canvas');oc.width=560;oc.height=120;const ot=new THREE.CanvasTexture(oc);
+plane(2.8,.6,F(new THREE.MeshBasicMaterial({map:ot}),0),0,2.7,.02);
+plane(2.3,.7,F(BM(tex(560,170,(c)=>{logo(c,85,85,62);c.fillStyle='#1B6B3A';c.font='700 72px Inter,Arial,sans-serif';c.textBaseline='middle';c.fillText('OneDose',170,88)})),true),0,-3.1,.01);
+{const p=new THREE.Mesh(new THREE.BoxGeometry(1,.32,.06),F(M(0x0A0F14,.6)));p.position.set(0,.78,-4.27);shell.add(p)}
+/* ---------- OLED + LED ---------- */
+const OC={idle:'#7FE3D5',read:'#FFC24D',ok:'#2DE2A0',fail:'#FF6B6B'},LC={idle:0xE8EDF2,read:0xFFB020,ok:0x19D3BC,fail:0xE53935};
+let ledS='idle';
+function setOled(t,s,k){const c=oc.getContext('2d');c.fillStyle='#06121C';c.fillRect(0,0,560,120);c.fillStyle=OC[k||ledS];c.textBaseline='middle';c.textAlign='center';c.font='700 46px ui-monospace,Menlo,monospace';c.fillText(t,280,s?44:62);if(s){c.font='500 26px ui-monospace,Menlo,monospace';c.fillText(s,280,92)}ot.needsUpdate=true}
+function setLed(k){ledS=k}
+setOled('Tap patient card');
+/* ---------- inner parts ---------- */
+const esp=new THREE.Group();esp.position.set(0,.55,-.9);scene.add(esp);
+const add=(g,geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);g.add(m);return m};
+add(esp,new THREE.BoxGeometry(2.6,.08,5),M(0x111827,.6),0,0,0);
+const espMod=add(esp,new THREE.BoxGeometry(1.5,.14,1.7),M(0xBFC5CC,.35,.7),0,.1,1.2);
+const chipMat=new THREE.MeshStandardMaterial({color:0x1A2330,roughness:.5,emissive:0x19D3BC,emissiveIntensity:0});
+add(esp,new THREE.BoxGeometry(.7,.1,.7),chipMat,0,.09,-.3);
+add(esp,new THREE.BoxGeometry(1.4,.03,.5),M(0xC9A227,.4,.6),0,.05,2.2);
+add(esp,new THREE.BoxGeometry(.9,.28,.7),M(0xC9CED4,.3,.8),0,.15,-2.45);
+[-1.2,1.2].forEach(x=>add(esp,new THREE.BoxGeometry(.18,.2,4.2),M(0x0B0F14,.7),x,.1,0));
+add(esp,new THREE.PlaneGeometry(1.4,.4),BM(tex(256,72,(c)=>{c.fillStyle='#fff';c.font='700 44px ui-monospace,Menlo,monospace';c.textBaseline='middle';c.fillText('ESP32',20,38)})),0,.05,-1.2).rotation.x=-Math.PI/2;
+const rc=new THREE.Group();scene.add(rc);scene.updateMatrixWorld(true);
+const rcBase=tp.localToWorld(V(0,-.5,-.7));rc.position.copy(rcBase);rc.rotation.copy(tp.rotation);
+add(rc,new THREE.BoxGeometry(3.6,2.8,.07),M(0x1E56C7,.5),0,-.1,0);
+add(rc,new THREE.PlaneGeometry(3.5,2.7),BM(tex(700,540,(c)=>{c.strokeStyle='rgba(217,232,255,.9)';c.lineWidth=8;for(let i=0;i<5;i++){const o=i*24;c.strokeRect(70+o,40+o,560-2*o,330-2*o)}c.fillStyle='#D9E8FF';c.font='700 54px Inter,Arial,sans-serif';c.fillText('RC522 RFID',150,470)})),0,-.1,.042);
+add(rc,new THREE.BoxGeometry(.6,.45,.09),M(0x10151C,.5),1.2,.55,.07);
+add(rc,new THREE.BoxGeometry(.3,.15,.1),M(0xC9CED4,.3,.8),1.45,-.4,.07);
+add(rc,new THREE.BoxGeometry(3.2,.22,.2),M(0x0B0F14,.7),0,-1.38,.12);
+/* ---------- cable ---------- */
+{const cv=new THREE.CatmullRomCurve3([V(0,.75,-3.5),V(0,.75,-5.5),V(.5,.2,-7.5),V(2.2,-.3,-9.5)]);const m=new THREE.Mesh(new THREE.TubeGeometry(cv,30,.16,8),M(0x20262E,.7));m.castShadow=true;scene.add(m)}
+/* ---------- wires ---------- */
+const WN=[["SDA","GPIO5",0xF2C200],["SCK","GPIO18",0xF08A00],["MOSI","GPIO23",0x2FA84F],["MISO","GPIO19",0x2F6FE0],["RST","GPIO21",0x8E44C8],["3.3V","",0xD62F2F],["GND","",0x8A9199]];
+const wires=WN.map(w=>({mesh:null,curve:null,mat:M(w[2],.4)}));
+function buildWires(){rc.updateMatrixWorld(true);wires.forEach((w,i)=>{const p0=rc.localToWorld(V((i-3)*.45,-1.55,.12)),p3=esp.localToWorld(V(-1.2,.18,-1.7+.55*i));
+const cv=new THREE.CatmullRomCurve3([p0,p0.clone().add(V(0,-.7,.6)),p0.clone().lerp(p3,.55).add(V(-.4,-.1,0)),p3.clone().add(V(-.5,.5,0)),p3]);
+if(w.mesh){scene.remove(w.mesh);w.mesh.geometry.dispose()}w.curve=cv;w.mesh=new THREE.Mesh(new THREE.TubeGeometry(cv,28,.05,6),w.mat);scene.add(w.mesh)})}
+/* ---------- waves, packet, card ---------- */
+function mkWaves(p,y,z){return [0,1,2].map(()=>{const m=new THREE.Mesh(new THREE.RingGeometry(.94,1,64),new THREE.MeshBasicMaterial({color:0x19D3BC,transparent:true,depthWrite:false,side:THREE.DoubleSide}));m.position.set(0,y,z);p.add(m);return m})}
+const wv=[...mkWaves(tp,-.5,.04),...mkWaves(rc,.1,.1)];wv.on=false;
+const packet=new THREE.Mesh(new THREE.SphereGeometry(.17,16,12),new THREE.MeshBasicMaterial({color:0x2DE2CB,depthTest:false,transparent:true}));packet.renderOrder=20;packet.visible=false;scene.add(packet);
+const cardTex=tex(680,430,(c,w,h)=>{rr(c,0,0,w,h,34);c.fillStyle='#fff';c.fill();c.fillStyle='#0E9F8E';c.fillRect(0,64,w,46);c.fillStyle='#0B1F33';c.font='700 58px Inter,Arial,sans-serif';c.fillText('Patient card',44,230);c.fillStyle='#D9B84A';rr(c,44,276,96,76,12);c.fill();logo(c,w-100,h-90,42);c.fillStyle='#4A5B6E';c.font='500 26px ui-monospace,Menlo,monospace';c.fillText('SYNTHETIC · P-10482',44,396)});
+const sd=M(0xF7F8FA,.6),card=new THREE.Mesh(new THREE.BoxGeometry(3.4,2.15,.06),[sd,sd,sd,sd,new THREE.MeshStandardMaterial({map:cardTex,roughness:.5}),sd]);card.castShadow=true;scene.add(card);
+const restP=V(6.3,-.43,1.4),restQ=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,.45)),CP={cp:0},tq=new THREE.Quaternion();
+/* ---------- tweens ---------- */
+const tws=[],ease=u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,S={c:0,e:0};
+function tween(d,fn,key,done){if(key)for(let i=tws.length;i--;)if(tws[i].k===key)tws.splice(i,1);const w={t:0,d:Math.max(.001,d*(RM?.02:1)),fn,k:key,done};tws.push(w);return w}
+function to(o,k,v,d,key,done){const a=o[k];return tween(d,u=>{o[k]=a+(v-a)*u},key,done)}
+/* ---------- views ---------- */
+const VW={closed:{p:[8.5,7.5,11.5],t:[1.2,1.1,0],c:0,e:0},cut:{p:[3.2,11.5,8],t:[.4,1,-.3],c:1,e:0},exp:{p:[10,10,14],t:[1,3,-.5],c:1,e:1}};
+function setView(k){const v=VW[k],f=1+Math.max(0,1.15-camera.aspect)*.9,t1=V(...v.t),p1=t1.clone().add(V(...v.p).sub(t1).multiplyScalar(f)),p0=camera.position.clone(),t0=controls.target.clone();
+tween(1.1,u=>{camera.position.lerpVectors(p0,p1,u);controls.target.lerpVectors(t0,t1,u)},'cam');to(S,'c',v.c,.9,'c');to(S,'e',v.e,1.1,'e');
+document.querySelectorAll('.vb').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===k))}
+let ac=-1,ae=-1;
+function applyShell(){if(ac===S.c&&ae===S.e)return;ac=S.c;ae=S.e;shell.position.y=6.5*S.e;rc.position.set(rcBase.x,rcBase.y+2.6*S.e,rcBase.z);shell.updateMatrixWorld(true);
+fade.forEach(f=>{f.m.opacity=1-.86*S.c;f.m.transparent=f.t||S.c>.001;f.m.depthWrite=S.c<.02});buildWires()}
+/* ---------- labels ---------- */
+const LB=[],HL=new Set();let showL=true;
+function lab(txt,a,ox,oy,v,key,col){const el=document.createElement('div');el.className='lb';el.textContent=txt;if(col)el.style.borderLeft='7px solid #'+col.toString(16).padStart(6,'0');stage.appendChild(el);const d=document.createElement('i');d.className='dot';stage.appendChild(d);const l=document.createElementNS(NS,'line');ov.appendChild(l);LB.push({el,d,l,a,ox,oy,v,key})}
+const cut=()=>S.c>.7;
+lab('OLED display',()=>tp.localToWorld(V(1.4,2.7,.05)),50,-36,()=>true);
+lab('Status LED (green/red)',()=>tp.localToWorld(V(1.25,.75,.04)),70,-4,()=>true);
+lab('USB-C power',()=>V(0,.78,-4.3),60,30,()=>true);
+lab('RC522 module',()=>rc.localToWorld(V(1.6,-1.2,.06)),60,34,cut,'rc');
+lab('Antenna coil',()=>rc.localToWorld(V(.4,.3,.05)),80,-34,cut,'coil');
+lab('ESP32 dev board',()=>esp.localToWorld(V(1.1,.1,-1.5)),60,22,cut,'esp');
+WN.forEach((w,i)=>lab(w[0]+(w[1]?' · '+w[1]:''),()=>wires[i].curve.getPoint(.93),-110,(i-3)*26,cut,'w'+i,w[2]));
+/* ---------- flow chips ---------- */
+const NODES=['OneDose Reader','FastAPI','PostgreSQL','Dashboard'],fl=$('#flow'),nd=NODES.map((n,i)=>{const e=document.createElement('span');e.className='nd';e.textContent=n;if(i)fl.appendChild(Object.assign(document.createElement('span'),{className:'ar',textContent:'→'}));fl.appendChild(e);return e});
+/* ---------- sequence ---------- */
+let step=0,busy=false,ended=false,auto=false,timer,fin,status=STEPS.map(()=>'pending'),espOn=false,pk=null,FAIL=false;
+const SMS=RM?900:1900;
+function paint(){$('#steps').innerHTML=STEPS.map((s,i)=>{const st=status[i],d=FAIL&&i===3?["Consent missing or expired. Access denied, red LED lit with 2s debounce.","403 Forbidden · Red LED"]:[s[1],s[2]];
+return `<li class="${st}"><b>${i+1}</b><div><strong>${s[0]}</strong>${st==='active'||st==='fail'?`<p>${d[0]}</p>`:''}${st==='skip'?'<p>Skipped</p>':''}${st==='done'||st==='active'||st==='fail'?`<code>${d[1]}</code>`:''}</div></li>`}).join('');
+const on=[[0],[0],[0,1],[1],[2],[3]][step-1]||[];nd.forEach((n,i)=>n.className='nd'+(on.includes(i)?(FAIL&&step>=4&&i===1?' bad':' on'):''));
+$('#tap').disabled=busy;$('#rep').disabled=!step&&!busy}
+function send(cv,d){pk={cv,t:0,d:d*(RM?.2:1)};packet.visible=true}
+function go(n){step=n;const bad=FAIL&&n===4;status=STEPS.map((_,i)=>i<n-1?'done':i===n-1?(bad?'fail':'active'):(FAIL&&n>=4?'skip':'pending'));
+HL.clear();(n===1?['rc','coil']:n<4?['esp']:[]).forEach(k=>HL.add(k));wv.on=n===1;espOn=n===2;
+if(n===1){setLed('read');setOled('Reading…');send(wires[3].curve,1.3)}
+if(n===3)send(new THREE.QuadraticBezierCurve3(espMod.getWorldPosition(V(0,0,0)),V(2,9,-1),V(8,6.5,-6)),1.5);
+if(bad){setLed('fail');setOled('Access denied','No active consent')}
+if(n===6){setLed('ok');setOled('Verified','P-10482')}
+paint()}
+function next(){if(ended)return;if(step>=6||(FAIL&&step>=4)){finish();return}go(step+1);if(auto)timer=setTimeout(next,SMS)}
+function finish(){clearTimeout(timer);ended=true;status=status.map(s=>s==='active'?'done':s);HL.clear();wv.on=false;espOn=false;paint();
+fin=setTimeout(()=>{to(CP,'cp',0,1.2,'cp');setLed('idle');setOled('Tap patient card',null,'idle');busy=false;ended=false;paint()},RM?800:2600)}
+function startTap(a){if(busy)return;FAIL=$('#fail').checked;busy=true;ended=false;auto=a;step=0;status=STEPS.map(()=>'pending');setLed('idle');setOled('Tap patient card',null,'idle');paint();
+to(CP,'cp',1,1.2,'cp',()=>{go(1);if(auto)timer=setTimeout(next,SMS)})}
+function reset(){clearTimeout(timer);clearTimeout(fin);busy=false;ended=false;step=0;status=STEPS.map(()=>'pending');HL.clear();wv.on=false;espOn=false;pk=null;packet.visible=false;setLed('idle');setOled('Tap patient card',null,'idle');to(CP,'cp',0,.5,'cp');paint()}
+$('#tap').onclick=()=>startTap(true);
+$('#stp').onclick=()=>{if(!busy)startTap(false);else{clearTimeout(timer);auto=false;next()}};
+$('#rep').onclick=()=>{reset();setTimeout(()=>startTap(true),RM?50:650)};
+$('#fail').onchange=()=>{if(!busy){FAIL=$('#fail').checked;paint()}};
+$('#lbt').onchange=e=>{showL=e.target.checked};
+document.querySelectorAll('.vb').forEach(b=>b.onclick=()=>setView(b.dataset.v));
+/* ---------- loop ---------- */
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+new ResizeObserver(()=>{resize();if(!tws.some(t=>t.k==='cam'))setView(document.querySelector('.vb[aria-pressed="true"]').dataset.v)}).observe(stage);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));let last=performance.now(),T=0;
+function tick(now){requestAnimationFrame(tick);const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
+[...tws].forEach(w=>{w.t+=dt;const u=Math.min(1,w.t/w.d);w.fn(ease(u));if(u>=1){tws.splice(tws.indexOf(w),1);w.done&&w.done()}});
+applyShell();
+const tapP=tp.localToWorld(V(0,-.5,.65));tp.getWorldQuaternion(tq);const e=ease(clamp(CP.cp,0,1));
+card.position.lerpVectors(restP,tapP,e);card.position.y+=Math.sin(Math.PI*clamp(CP.cp,0,1))*1.5;card.quaternion.slerpQuaternions(restQ,tq,e);
+ledMat.color.setHex(LC[ledS]).multiplyScalar(ledS==='read'&&!RM?.6+.4*Math.sin(T*7):ledS==='idle'?.95:1);
+wv.forEach((m,i)=>{const p=RM?.5:(T*.8+(i%3)/3)%1;m.visible=wv.on;m.scale.setScalar(.5+p*1.05);m.material.opacity=(1-p)*.75});
+chipMat.emissiveIntensity=espOn?.5+.5*Math.sin(T*8):0;
+if(pk){pk.t+=dt;const u=Math.min(1,pk.t/pk.d);packet.position.copy(pk.cv.getPoint(u));if(u>=1){pk=null;packet.visible=false}}
+const w=stage.clientWidth,h=stage.clientHeight;
+LB.forEach(L=>{const p=L.a().project(camera),x=(p.x+1)/2*w,y=(1-p.y)/2*h,on=L.v()&&showL&&p.z<1,bw=L.el.offsetWidth,bh=L.el.offsetHeight;
+let bx=x+L.ox-(L.ox<0?bw:0),by=y+L.oy-bh/2;bx=clamp(bx,4,w-bw-4);by=clamp(by,56,h-bh-52);
+L.el.style.transform=`translate(${bx}px,${by}px)`;L.d.style.transform=`translate(${x-3.5}px,${y-3.5}px)`;
+L.l.setAttribute('x1',x);L.l.setAttribute('y1',y);L.l.setAttribute('x2',L.ox<0?bx+bw:bx);L.l.setAttribute('y2',by+bh/2);
+const o=on?1:0;L.el.style.opacity=o;L.d.style.opacity=o;L.l.style.opacity=o;L.el.classList.toggle('on',HL.has(L.key))});
+controls.update();renderer.render(scene,camera)}
+resize();camera.position.set(8.5,7.5,11.5);controls.target.set(1.2,1.1,0);applyShell();paint();setView('closed');requestAnimationFrame(tick);
+window.addEventListener('resize',resize);
+}catch(err){
+const st=document.getElementById('stage');
+if(st){st.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;text-align:center;color:var(--mut)"><p style="font-size:16px;font-weight:600;color:var(--ink);margin:0 0 8px">3D Simulation Unavailable</p><p style="margin:0">WebGL or 3D graphics could not be initialized in this browser. Please check hardware acceleration or browser settings.</p></div>';}
+}
+})();
+</script>
+</body>
+</html>
