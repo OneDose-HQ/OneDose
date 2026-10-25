@@ -168,34 +168,35 @@ export default function Prescribe() {
   };
 
   const handleUseAlternative = (alt) => {
-    const mockBrand = {
+    // The API sends each ingredient as text like "Paracetamol 500 mg"; turn that back into name + strength.
+    const ingredients = (alt.ingredients || []).map((text) => {
+      const m = /^(.*?)\s+([\d.]+)\s*mg$/i.exec(text);
+      return m ? { name: m[1], strength_mg: Number(m[2]) } : { name: text, strength_mg: 0 };
+    });
+    const newBrand = {
       brand_id: alt.brand_id,
       brand_name: alt.brand_name,
-      strength: alt.ingredients?.[0] || '500 mg',
-      ingredients: [
-        {
-          name: alt.brand_name.includes('Dolo') ? 'Paracetamol' : 'Paracetamol',
-          strength_mg: alt.brand_name.includes('Dolo') ? 650 : 500,
-        },
-      ],
+      strength: alt.strength,
+      ingredients,
     };
-    setSelectedBrand(mockBrand);
-    setDose(alt.brand_name.includes('Dolo') ? '650' : '500');
+    const newDose = ingredients[0]?.strength_mg || Number(dose);  // one tablet of the alternative
+    setSelectedBrand(newBrand);
+    setDose(String(newDose));
     addToast(`Switched to safer alternative: ${alt.brand_name}`, 'info');
 
     // Run check on new alternative
     checkPrescription({
       patient_id: selectedPatient?.patient_id || selectedPatient?.id,
-      brand_id: mockBrand.brand_id,
-      brand_name: mockBrand.brand_name,
-      dose: Number(alt.brand_name.includes('Dolo') ? 650 : 500),
+      brand_id: newBrand.brand_id,
+      brand_name: newBrand.brand_name,
+      dose: newDose,
       frequency,
     }).then((res) => {
       setAlerts(res.alerts || []);
       setAlternatives(res.alternatives || []);
       setSqlData(res.sql || null);
       setHasChecked(true);
-    });
+    }).catch((err) => addToast(err.message, 'error'));
   };
 
   const handleSavePrescription = async () => {
