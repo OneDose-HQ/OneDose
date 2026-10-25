@@ -12,7 +12,8 @@
 --     admin      manages reference data, accounts, cards, devices; reads audit_log and statistics; NO patient records.
 --     scanner    can only call fn_record_scan (the card reader path).
 --   Supporting functions: fn_has_consent, fn_current_clinician_id, fn_current_patient_id (used by the policies),
---   fn_login (password check inside the DB), fn_record_scan, view v_latest_scan, view v_pharmacist_patients.
+--   fn_login (password check inside the DB), fn_record_scan, view v_latest_scan, view v_pharmacist_patients,
+--   fn_alert_severity_counts and fn_top_overridden (aggregates for the analytics page).
 -- Inputs: none
 -- Outputs: Roles and access rules.
 -- Depends on: 01_schema.sql, 04_check_functions.sql, 05_views.sql, 07_triggers.sql
@@ -168,6 +169,30 @@ SELECT p.patient_id,
 FROM patients p
 WHERE fn_has_consent(p.patient_id);
 
+-- Alert analytics for the dashboard. Aggregates only, no patient identity, so clinicians may read them too.
+CREATE OR REPLACE FUNCTION fn_alert_severity_counts()
+RETURNS TABLE(severity severity_level, alert_count bigint)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+    SELECT s.sev, count(a.alert_id)
+    FROM (SELECT unnest(enum_range(NULL::severity_level)) AS sev) s
+    LEFT JOIN alerts a ON a.severity = s.sev
+    GROUP BY s.sev ORDER BY s.sev DESC
+$$;
+
+CREATE OR REPLACE FUNCTION fn_top_overridden(p_limit integer DEFAULT 5)
+RETURNS TABLE(ingredient_pair text, check_type check_type, override_count bigint)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+    SELECT CASE WHEN r.name IS NULL THEN i.name ELSE i.name || ' × ' || r.name END,
+           a.check_type, count(*)
+    FROM alerts a
+    JOIN ingredients i      ON i.ingredient_id = a.ingredient_id
+    LEFT JOIN ingredients r ON r.ingredient_id = a.related_ingredient_id
+    WHERE a.status = 'overridden'
+    GROUP BY 1, 2
+    ORDER BY count(*) DESC, 1
+    LIMIT greatest(p_limit, 1)
+$$;
+
 -- 05's refresh function must be able to REFRESH a materialized view the admin does not own
 ALTER FUNCTION fn_refresh_alert_stats() SECURITY DEFINER SET search_path = public, pg_temp;
 
@@ -222,8 +247,9 @@ GRANT UPDATE (end_date)  ON prescription_items TO onedose_clinician;
 GRANT UPDATE (valid_to)  ON patient_allergies, patient_conditions TO onedose_clinician;
 GRANT UPDATE (revoked_at) ON consents TO onedose_clinician;
 GRANT UPDATE (status, override_reason, resolved_by, resolved_at, explanation) ON alerts TO onedose_clinician;
-GRANT SELECT ON v_active_medications, v_patient_summary, v_latest_scan TO onedose_clinician;
+GRANT SELECT ON v_active_medications, v_patient_summary, v_latest_scan, mv_alert_stats TO onedose_clinician;
 SELECT pg_temp.grant_exec('onedose_clinician', ARRAY[
+    'fn_refresh_alert_stats', 'fn_alert_severity_counts', 'fn_top_overridden',
     'fn_age_years', 'fn_class_descendants', 'fn_expand_brand', 'fn_search_brands', 'fn_meds_as_of',
     'fn_patient_active_ingredients', 'fn_in_class_tree', 'chk_duplicate', 'chk_interaction', 'chk_allergy',
     'chk_contraindication', 'chk_dose', 'fn_check_core', 'fn_check_prescription', 'fn_safe_alternatives',
@@ -254,7 +280,8 @@ GRANT SELECT ON audit_log, v_audit_recent, mv_alert_stats, consents TO onedose_a
 GRANT INSERT ON consents TO onedose_admin;
 GRANT UPDATE (revoked_at) ON consents TO onedose_admin;
 SELECT pg_temp.grant_exec('onedose_admin', ARRAY['fn_refresh_alert_stats', 'fn_verify_audit_chain',
-                                                  'fn_audit_payload', 'fn_log_read']);
+                                                  'fn_audit_payload', 'fn_log_read',
+                                                  'fn_alert_severity_counts', 'fn_top_overridden']);
 
 -- 4f. Scanner and API login
 SELECT pg_temp.grant_exec('onedose_scanner', ARRAY['fn_record_scan']);
