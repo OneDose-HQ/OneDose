@@ -30,6 +30,7 @@ class Settings:
     db_name: str
     db_user: str
     db_password: str
+    db_sslmode: str
     jwt_secret: str
     device_key: str
     card_salt: str
@@ -46,6 +47,7 @@ def load_settings() -> Settings:
         db_name=_need("DB_NAME"),
         db_user=_need("DB_USER"),
         db_password=os.getenv("DB_PASSWORD", ""),
+        db_sslmode=os.getenv("DB_SSLMODE", "prefer").strip() or "prefer",  # use "require" for a hosted database
         jwt_secret=_need("JWT_SECRET"),
         device_key=_need("DEVICE_KEY"),
         card_salt=os.getenv("CARD_SALT", "OneDoseDemoCardSalt2026"),

@@ -29,8 +29,12 @@ _pool: ConnectionPool | None = None
 def open_pool() -> None:
     global _pool
     conninfo = make_conninfo(host=settings.db_host, port=settings.db_port, dbname=settings.db_name,
-                             user=settings.db_user, password=settings.db_password or None)
-    _pool = ConnectionPool(conninfo, min_size=1, max_size=10, open=True, kwargs={"autocommit": False})
+                             user=settings.db_user, password=settings.db_password or None,
+                             sslmode=settings.db_sslmode)
+    # check= tests a connection before it is handed out and replaces a dead one. A serverless database (Neon)
+    # closes idle connections after a few minutes, so without this the first request after a quiet spell fails.
+    _pool = ConnectionPool(conninfo, min_size=1, max_size=10, open=True, kwargs={"autocommit": False},
+                           check=ConnectionPool.check_connection, max_idle=240, max_lifetime=1800)
 
 
 def close_pool() -> None:
