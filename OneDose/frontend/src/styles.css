@@ -516,3 +516,191 @@ a:hover {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ---------------------------------------------------------------------
+   Patient portal
+   --------------------------------------------------------------------- */
+.portal-subnav {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.portal-subnav-link {
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.portal-subnav-link:hover { background: var(--brand-tint); color: var(--ink); }
+.portal-subnav-link.active { background: var(--brand-tint); color: var(--brand-dark); font-weight: 600; }
+
+.portal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.portal-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 860px) {
+  .portal-grid, .portal-grid-3 { grid-template-columns: 1fr; }
+}
+
+.portal-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.portal-list > li { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.portal-list > li:last-child { border-bottom: none; }
+.portal-row-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.portal-muted { color: var(--muted); font-size: 13px; }
+.portal-link { display: inline-block; margin-top: 8px; color: var(--brand-dark); font-weight: 600; font-size: 14px; }
+.portal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.portal-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.portal-error { border-color: var(--critical); color: var(--critical); background: var(--critical-tint); }
+
+.portal-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.portal-table th { text-align: left; color: var(--muted); font-size: 12px; font-weight: 600; padding: 6px 10px 6px 0; }
+.portal-table td { padding: 8px 10px 8px 0; border-top: 1px solid var(--border); vertical-align: top; }
+
+.portal-results { border: 1px solid var(--border); border-radius: var(--radius-control); margin-top: 6px; }
+.portal-results > li { padding: 0; }
+.portal-pick { width: 100%; text-align: left; background: transparent; border: none; padding: 10px 12px; cursor: pointer; }
+.portal-pick:hover { background: var(--brand-tint); }
+
+.portal-check { margin-top: 8px; padding: 8px 10px; border-radius: var(--radius-control); font-size: 13px; }
+.portal-check-warning { background: var(--major-tint); color: var(--major); font-weight: 600; }
+.portal-check-unchecked, .portal-check-no_match { background: var(--bg); color: var(--ink-soft); }
+
+/* Login left panel: safety pipeline animation (used by SafetyPipelineAnimation in Login.jsx) */
+.od-dot { fill: #2F7A68; opacity: 0.35; animation: od-drift 9s ease-in-out infinite alternate; }
+.od-dot:nth-child(2n) { animation-duration: 12s; animation-direction: alternate-reverse; }
+@keyframes od-drift { from { transform: translate(0, 0); } to { transform: translate(10px, -14px); } }
+
+.od-gate { fill: #0F3A32; stroke: #3A8A76; stroke-width: 2; }
+.od-g1 { animation: od-g1 14s ease-in-out infinite; }
+.od-g2 { animation: od-g2 14s ease-in-out infinite; }
+.od-g3 { animation: od-g3 14s ease-in-out infinite; }
+.od-g4 { animation: od-g4 14s ease-in-out infinite; }
+.od-g5 { animation: od-g5 14s ease-in-out infinite; }
+@keyframes od-g1 { 0%, 9% { stroke: #3A8A76; fill: #0F3A32; } 11%, 92% { stroke: #4ADE80; fill: #14532D; } 96%, 100% { stroke: #3A8A76; fill: #0F3A32; } }
+@keyframes od-g2 { 0%, 19% { stroke: #3A8A76; fill: #0F3A32; } 21%, 92% { stroke: #4ADE80; fill: #14532D; } 96%, 100% { stroke: #3A8A76; fill: #0F3A32; } }
+@keyframes od-g3 { 0%, 29% { stroke: #3A8A76; fill: #0F3A32; } 31%, 62% { stroke: #F5B942; fill: #5C3D0A; } 66%, 92% { stroke: #4ADE80; fill: #14532D; } 96%, 100% { stroke: #3A8A76; fill: #0F3A32; } }
+@keyframes od-g4 { 0%, 71% { stroke: #3A8A76; fill: #0F3A32; } 73%, 92% { stroke: #4ADE80; fill: #14532D; } 96%, 100% { stroke: #3A8A76; fill: #0F3A32; } }
+@keyframes od-g5 { 0%, 77% { stroke: #3A8A76; fill: #0F3A32; } 79%, 92% { stroke: #4ADE80; fill: #14532D; } 96%, 100% { stroke: #3A8A76; fill: #0F3A32; } }
+
+.od-ic { fill: none; stroke: #D6EFE8; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.od-p1 { opacity: 0; animation: od-p1 14s ease-in-out infinite; }
+@keyframes od-p1 { 0% { opacity: 0; transform: translateY(0); } 4% { opacity: 1; } 10% { transform: translateY(90px); } 20% { transform: translateY(175px); } 30% { transform: translateY(260px); } 44% { opacity: 1; transform: translateY(260px); } 48%, 100% { opacity: 0; transform: translateY(260px); } }
+.od-p2 { opacity: 0; animation: od-p2 14s ease-in-out infinite; }
+@keyframes od-p2 { 0%, 48% { opacity: 0; transform: translateY(0); } 50% { opacity: 1; transform: translateY(0); } 54% { transform: translateY(90px); } 60% { transform: translateY(175px); } 66% { transform: translateY(260px); } 72% { transform: translateY(345px); } 78% { transform: translateY(430px); } 84% { transform: translateY(500px); } 90% { opacity: 1; transform: translateY(500px); } 94%, 100% { opacity: 0; transform: translateY(500px); } }
+
+.od-shield { opacity: 0; transform-box: fill-box; transform-origin: center; fill: #F5B942; fill-opacity: 0.18; stroke: #F5B942; stroke-width: 3; stroke-linejoin: round; animation: od-sh 14s ease-in-out infinite; }
+@keyframes od-sh { 0%, 30% { opacity: 0; transform: scale(0.4); } 33% { opacity: 1; transform: scale(1.15); } 36% { transform: scale(1); } 46% { opacity: 1; } 50%, 100% { opacity: 0; transform: scale(1); } }
+
+.od-done { opacity: 0; transform-box: fill-box; transform-origin: center; animation: od-dn 14s ease-in-out infinite; }
+@keyframes od-dn { 0%, 83% { opacity: 0; transform: scale(0.4); } 86% { opacity: 1; transform: scale(1.2); } 89% { transform: scale(1); } 92% { opacity: 1; } 96%, 100% { opacity: 0; } }
+
+/* Reduced motion: show a still picture (first pill stopped at the amber allergy gate with its shield) */
+@media (prefers-reduced-motion: reduce) {
+  .od-dot, .od-g1, .od-g2, .od-g3, .od-g4, .od-g5, .od-p1, .od-p2, .od-shield, .od-done { animation: none !important; }
+  .od-g1, .od-g2 { stroke: #4ADE80; fill: #14532D; }
+  .od-g3 { stroke: #F5B942; fill: #5C3D0A; }
+  .od-p1 { opacity: 1; transform: translateY(260px); }
+  .od-shield { opacity: 1; }
+}
+
+/* ---------------------------------------------------------------------
+   Patient portal home tiles
+   --------------------------------------------------------------------- */
+:root {
+  --tile-violet: #5B4BC4;
+  --tile-violet-tint: #EFEDFB;
+  --tile-slate: #475569;
+  --tile-slate-tint: #EEF1F5;
+  --tile-navy-tint: #E8EEF4;
+}
+.portal-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0 0 24px; }
+@media (max-width: 860px) { .portal-tiles { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .portal-tiles { grid-template-columns: 1fr; } }
+.portal-tile {
+  --tile: var(--brand-dark);
+  --tile-bg: var(--brand-tint);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--tile);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.portal-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-dropdown); }
+.portal-tile:focus-visible { outline: 2px solid var(--tile); outline-offset: 2px; }
+.portal-tile-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--tile-bg);
+  color: var(--tile);
+}
+.portal-tile-icon svg { width: 24px; height: 24px; }
+.portal-tile-title { font-size: 16px; font-weight: 600; }
+.portal-tile-desc { color: var(--muted); font-size: 13px; }
+.portal-tile--blue { --tile: var(--minor); --tile-bg: var(--minor-tint); }
+.portal-tile--green { --tile: var(--ok); --tile-bg: var(--ok-tint); }
+.portal-tile--violet { --tile: var(--tile-violet); --tile-bg: var(--tile-violet-tint); }
+.portal-tile--slate { --tile: var(--tile-slate); --tile-bg: var(--tile-slate-tint); }
+.portal-tile--navy { --tile: var(--navy-2); --tile-bg: var(--tile-navy-tint); }
+@media (prefers-reduced-motion: reduce) {
+  .portal-tile { transition: none; }
+  .portal-tile:hover { transform: none; }
+}
+
+/* Patient portal: back bar on inner pages */
+.portal-backbar-wrap {
+  background: var(--tile-bg, var(--brand-tint));
+  border-top: 3px solid var(--tile, var(--brand-dark));
+  border-bottom: 1px solid var(--border);
+}
+.portal-backbar { display: flex; align-items: center; gap: 16px; padding: 10px 24px; }
+.portal-back {
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--tile, var(--brand-dark));
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.portal-back:hover { box-shadow: var(--shadow-card); }
+.portal-back:focus-visible { outline: 2px solid var(--tile, var(--brand-dark)); outline-offset: 2px; }
+.portal-backbar-title { color: var(--tile, var(--brand-dark)); font-size: 15px; font-weight: 600; }
+
+/* Patient portal: colour inside each section (body gets .portal-section + tone) */
+.portal-section .od-card {
+  border-top: 4px solid var(--tile, var(--brand-dark));
+  background: linear-gradient(180deg, var(--tile-bg, var(--brand-tint)) 0, var(--surface) 72px);
+}
+.portal-section .od-card.portal-error {
+  border-top-color: var(--critical);
+  background: var(--critical-tint);
+}
+.portal-section .section-label { color: var(--tile, var(--brand-dark)); }
+.portal-section .portal-link { color: var(--tile, var(--brand-dark)); }
+
+/* Patient portal Home: tinted summary cards, and keep tile titles dark on hover */
+.od-card.portal-tinted {
+  border-top: 4px solid var(--tile, var(--brand-dark));
+  background: linear-gradient(180deg, var(--tile-bg, var(--brand-tint)) 0, var(--surface) 72px);
+}
+.od-card.portal-tinted .section-label,
+.od-card.portal-tinted .portal-link { color: var(--tile, var(--brand-dark)); }
+.portal-tile:hover { color: var(--ink); }

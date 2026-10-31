@@ -1,6 +1,6 @@
 # File: backend/auth.py
 # Owner: Bhavya  (only the owner edits this file)
-# Purpose: Login, JWT creation and checking, role guard (clinician, pharmacist, admin), scanner device-key check. Endpoint: POST /auth/login.
+# Purpose: Login, JWT creation and checking, role guard (clinician, pharmacist, admin, patient), scanner device-key check. Endpoint: POST /auth/login (staff first, then patients).
 # Inputs: Email (or username) and password, JWT token, device key header (X-Device-Key).
 # Outputs: A JWT, the current user, or an access-denied error.
 # Depends on: db.py, config.py
@@ -12,6 +12,7 @@ import time
 from dataclasses import dataclass
 
 import jwt
+from psycopg import errors as pg_errors
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -28,10 +29,11 @@ _fails: dict[str, list[float]] = {}
 
 @dataclass(frozen=True)
 class User:
-    username: str  # clinicians.db_username, also written to the audit log
-    clinician_id: int
-    role: str  # clinician | pharmacist | admin
+    username: str  # clinicians.db_username or patients.db_username, also written to the audit log
+    clinician_id: int  # 0 for a patient
+    role: str  # clinician | pharmacist | admin | patient
     name: str
+    patient_id: int | None = None  # set for a patient
 
 
 def _recent_fails(key: str) -> list[float]:
@@ -48,22 +50,33 @@ async def login(body: LoginIn, request: Request):
         raise HTTPException(429, "Too many failed attempts. Try again in a few minutes")
 
     def work():
-        with db.tx() as t:  # runs as the API login: only fn_login is allowed here
-            return t.one("SELECT * FROM fn_login(%s, %s)", (email, body.password), show=False)
+        with db.tx() as t:  # runs as the API login: only the two login functions are allowed here
+            staff = t.one("SELECT * FROM fn_login(%s, %s)", (email, body.password), show=False)
+            if staff is not None:
+                return staff, None
+            try:
+                return None, t.one("SELECT * FROM fn_patient_login(%s, %s)", (email, body.password), show=False)
+            except pg_errors.UndefinedFunction:  # 09_patient_portal.sql not loaded yet: staff login still works
+                return None, None
 
-    row = await db.run(work)
-    if row is None:
+    staff, patient = await db.run(work)
+    if staff is None and patient is None:
         _fails[key].append(time.time())
         raise HTTPException(401, "Invalid email or password")
     _fails.pop(key, None)
 
     now = int(time.time())
-    token = jwt.encode(
-        {"sub": row["db_username"], "cid": row["clinician_id"], "role": row["role"], "name": row["full_name"],
-         "iat": now, "exp": now + settings.jwt_hours * 3600},
-        settings.jwt_secret, algorithm="HS256")
-    return {"token": token,
-            "user": {"name": row["full_name"], "role": row["role"], "email": email, "clinician_id": row["clinician_id"]}}
+    if staff is not None:
+        claims = {"sub": staff["db_username"], "cid": staff["clinician_id"], "role": staff["role"],
+                  "name": staff["full_name"]}
+        user = {"name": staff["full_name"], "role": staff["role"], "email": email, "clinician_id": staff["clinician_id"]}
+    else:
+        claims = {"sub": patient["db_username"], "cid": 0, "pid": patient["patient_id"], "role": "patient",
+                  "name": patient["full_name"]}
+        user = {"name": patient["full_name"], "role": "patient", "email": email, "patient_id": patient["patient_id"]}
+    token = jwt.encode({**claims, "iat": now, "exp": now + settings.jwt_hours * 3600},
+                       settings.jwt_secret, algorithm="HS256")
+    return {"token": token, "user": user}
 
 
 def current_user(creds: HTTPAuthorizationCredentials | None = Depends(bearer)) -> User:
@@ -71,7 +84,8 @@ def current_user(creds: HTTPAuthorizationCredentials | None = Depends(bearer)) -
         raise HTTPException(401, "Not signed in")
     try:
         p = jwt.decode(creds.credentials, settings.jwt_secret, algorithms=["HS256"])
-        return User(username=p["sub"], clinician_id=p["cid"], role=p["role"], name=p["name"])
+        return User(username=p["sub"], clinician_id=p.get("cid", 0), role=p["role"], name=p["name"],
+                    patient_id=p.get("pid"))
     except (jwt.PyJWTError, KeyError):
         raise HTTPException(401, "Session expired. Please sign in again")
 

@@ -1,15 +1,16 @@
 # File: backend/schemas.py
 # Owner: Bhavya  (only the owner edits this file)
-# Purpose: Define the shape of every request and response (LoginIn, TokenOut, ScanIn, CheckIn, PrescribeIn, OverrideIn, AlertOut, AlternativeOut, PatientOut) and the frequency codes the dashboard uses.
+# Purpose: Define the shape of every request and response (LoginIn, TokenOut, ScanIn, CheckIn, PrescribeIn, OverrideIn, AlertOut, AlternativeOut, PatientOut, ConsentGrantIn, SelfReportedIn) and the frequency codes the dashboard uses.
 # Inputs: JSON bodies.
 # Outputs: Validated objects.
 # Depends on: none
 #
 # The shapes follow frontend/src/api.js: login by email, dose in mg plus a frequency code, alerts with a string id.
+from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # Dashboard frequency code -> doses per day. SOS (as needed) is counted as 1 per day.
 FREQUENCY_PER_DAY = {"OD": 1, "BD": 2, "TDS": 3, "QID": 4, "SOS": 1}
@@ -26,7 +27,8 @@ class UserOut(BaseModel):
     name: str
     role: str
     email: str
-    clinician_id: int
+    clinician_id: int | None = None  # staff only
+    patient_id: int | None = None    # patients only
 
 
 class TokenOut(BaseModel):
@@ -108,3 +110,31 @@ class PatientOut(BaseModel):
     allergies: list[dict]
     conditions: list[dict]
     active_medications: list[dict]
+
+
+# ---------------------------------------------------------------------
+# Patient portal (routes/portal.py)
+# ---------------------------------------------------------------------
+class ConsentGrantIn(BaseModel):
+    days: int = Field(default=365, ge=1, le=365)
+
+
+class SelfReportedIn(BaseModel):
+    """A store-bought medicine the patient reports. Either a brand picked from the list or a typed name, never both."""
+    brand_id: int | None = Field(default=None, gt=0)
+    free_text_name: str | None = Field(default=None, max_length=80)
+    frequency: Frequency = "OD"
+    note: str | None = Field(default=None, max_length=300)
+    started_on: date | None = None
+
+    @model_validator(mode="after")
+    def exactly_one_target(self):
+        name = (self.free_text_name or "").strip()
+        self.free_text_name = name or None
+        if (self.brand_id is None) == (self.free_text_name is None):
+            raise ValueError("Pick a medicine from the list or type its name")
+        if self.free_text_name is not None and len(self.free_text_name) < 2:
+            raise ValueError("The medicine name is too short")
+        if self.started_on is not None and self.started_on > date.today():
+            raise ValueError("The start date cannot be in the future")
+        return self

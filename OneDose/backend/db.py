@@ -1,7 +1,7 @@
 # File: backend/db.py
 # Owner: Bhavya  (only the owner edits this file)
 # Purpose: The ONLY file that talks to the database. Runs SQL functions and reads views, switches database role per request, retries on serialization failure.
-# Inputs: A role name ('clinician', 'pharmacist', 'admin', 'scanner' or None) and the login name, then SQL with parameters.
+# Inputs: A role name ('clinician', 'pharmacist', 'patient', 'admin', 'scanner' or None) and the login name, then SQL with parameters.
 # Outputs: Rows as dictionaries plus timing and the SQL text (for the SqlPeek panel).
 # Depends on: config.py
 #
@@ -22,7 +22,7 @@ from starlette.concurrency import run_in_threadpool
 
 from config import settings
 
-ROLES = {"clinician", "pharmacist", "admin", "scanner"}
+ROLES = {"clinician", "pharmacist", "patient", "admin", "scanner"}
 _pool: ConnectionPool | None = None
 
 

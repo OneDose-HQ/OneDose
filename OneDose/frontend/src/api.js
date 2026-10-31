@@ -619,4 +619,37 @@ export async function getAuditLog() {
   }
 }
 
+// ---------------------------------------------------------------------
+// PATIENT PORTAL (needs a patient login; no mock data)
+// ---------------------------------------------------------------------
+async function portalCall(method, url, config = {}) {
+  if (isMockMode) throw new Error('The patient portal needs the real server (VITE_USE_MOCK is on).');
+  try {
+    const res = await api.request({ method, url, ...config });
+    return res.data;
+  } catch (err) {
+    if (!err.response) throw new Error(NETWORK_ERROR);
+    const detail = err.response?.data?.detail;
+    throw new Error(typeof detail === 'string' ? detail : 'Please check the values you entered.');
+  }
+}
+
+export const getPortalHome = () => portalCall('get', '/portal/home');
+export const getPortalMedications = (asOf) =>
+  portalCall('get', '/portal/medications', { params: asOf ? { as_of: asOf } : {} });
+export const getPortalSchedule = () => portalCall('get', '/portal/schedule');
+export const getPortalIngredients = () => portalCall('get', '/portal/ingredients');
+export const getPortalHealth = () => portalCall('get', '/portal/health');
+export const getPortalConsent = () => portalCall('get', '/portal/consent');
+export const revokePortalConsent = () => portalCall('post', '/portal/consent/revoke');
+export const grantPortalConsent = (days) => portalCall('post', '/portal/consent/grant', { data: { days } });
+export const getPortalAccessLog = () => portalCall('get', '/portal/access-log');
+export const searchPortalSymptom = (q) => portalCall('get', '/portal/symptoms', { params: { q } });
+export const searchPortalBrands = (q) => portalCall('get', '/portal/brands/search', { params: { q } });
+export const getSelfReported = () => portalCall('get', '/portal/self-reported');
+export const addSelfReported = (payload) => portalCall('post', '/portal/self-reported', { data: payload });
+export const stopSelfReported = (id) => portalCall('post', `/portal/self-reported/${id}/stop`);
+// Doctor side: what the patient reported before the visit (clinician login, consent required)
+export const getBeforeComingIn = (patientId) => portalCall('get', `/patients/${patientId}/self-reported`);
+
 export default api;
