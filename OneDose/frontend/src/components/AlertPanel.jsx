@@ -76,6 +76,9 @@ export default function AlertPanel({
   const [activeOverrideAlert, setActiveOverrideAlert] = useState(null);
   const [reasonText, setReasonText] = useState('');
   const [modalError, setModalError] = useState('');
+  const [activeTab, setActiveTab] = useState('alerts');
+  const tab = alternatives.length > 0 ? activeTab : 'alerts';
+  const tabStyle = (on) => ({ flex: 1, padding: '8px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', background: on ? 'var(--bg)' : 'transparent', color: on ? 'var(--ink)' : 'var(--muted)', border: on ? '1px solid var(--ink)' : '1px solid var(--border)', fontWeight: on ? 600 : 400 });
 
   // Priority sort order: critical > major > moderate > minor
   const severityRank = { critical: 4, major: 3, moderate: 2, minor: 1 };
@@ -148,9 +151,19 @@ export default function AlertPanel({
           </span>
         )}
       </div>
+      {alternatives.length > 0 && (
+        <div role="tablist" style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+          <button type="button" role="tab" aria-selected={tab === 'alerts'} onClick={() => setActiveTab('alerts')} style={tabStyle(tab === 'alerts')}>
+            Alerts ({alerts.length})
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'alternatives'} onClick={() => setActiveTab('alternatives')} style={tabStyle(tab === 'alternatives')}>
+            Safer alternatives ({alternatives.length})
+          </button>
+        </div>
+      )}
 
       {/* Alerts Content */}
-      {alerts.length === 0 ? (
+      {tab === 'alerts' && (alerts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '36px 16px', color: 'var(--muted)' }}>
           <div style={{ marginBottom: '10px' }}>
             <IconShieldCheck />
@@ -247,10 +260,10 @@ export default function AlertPanel({
             );
           })}
         </div>
-      )}
+      ))}
 
       {/* Safer Alternatives Section */}
-      {alternatives.length > 0 && (
+      {tab === 'alternatives' && alternatives.length > 0 && (
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '18px' }}>
           <span className="section-label" style={{ marginBottom: '12px' }}>
             SAFER ALTERNATIVES

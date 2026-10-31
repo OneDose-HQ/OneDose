@@ -66,6 +66,93 @@ function LockIcon({ size = 16, color = 'var(--login-brand)' }) {
 }
 
 // ---------------------------------------------------------------------
+// SAFETY PIPELINE ANIMATION (left panel)
+// A pill falls through five safety gates. The allergy gate turns amber and a
+// shield stops it; a safer pill then passes every gate. Pure SVG + CSS (see
+// the .od-* rules at the end of styles.css). No libraries, no text.
+// ---------------------------------------------------------------------
+function SafetyPipelineAnimation() {
+  const gates = [
+    { cy: 150, cls: 'od-g1' },
+    { cy: 235, cls: 'od-g2' },
+    { cy: 320, cls: 'od-g3' },
+    { cy: 405, cls: 'od-g4' },
+    { cy: 490, cls: 'od-g5' },
+  ];
+  return (
+    <svg
+      viewBox="0 0 400 640"
+      role="img"
+      aria-label="A medicine passes five safety checks; a conflict is caught and a safer medicine goes through"
+      style={{ width: '100%', maxWidth: '440px', height: 'auto', maxHeight: '72vh' }}
+    >
+      {/* soft drifting dots */}
+      <g>
+        <circle className="od-dot" cx="50" cy="90" r="3" />
+        <circle className="od-dot" cx="350" cy="70" r="4" />
+        <circle className="od-dot" cx="70" cy="440" r="4" />
+        <circle className="od-dot" cx="340" cy="560" r="3" />
+        <circle className="od-dot" cx="120" cy="40" r="3" />
+        <circle className="od-dot" cx="30" cy="300" r="3" />
+        <circle className="od-dot" cx="372" cy="320" r="3" />
+        <circle className="od-dot" cx="150" cy="610" r="4" />
+        <circle className="od-dot" cx="300" cy="610" r="3" />
+        <circle className="od-dot" cx="320" cy="190" r="3" />
+        <circle className="od-dot" cx="90" cy="230" r="3" />
+      </g>
+
+      {/* guide line */}
+      <line x1="200" y1="40" x2="200" y2="580" stroke="#2F7A68" strokeWidth="2" strokeDasharray="4 8" />
+
+      {/* five gates */}
+      {gates.map((g) => (
+        <circle key={g.cls} className={`od-gate ${g.cls}`} cx="200" cy={g.cy} r="26" />
+      ))}
+
+      {/* gate icons: duplicate, interaction, allergy, condition, dose */}
+      <circle className="od-ic" cx="192" cy="150" r="8" />
+      <circle className="od-ic" cx="208" cy="150" r="8" />
+      <path className="od-ic" d="M192 227 L208 243 M208 227 L192 243" />
+      <path className="od-ic" d="M200 311 L210 328 H190 Z" />
+      <path className="od-ic" d="M200 396 V414 M191 405 H209" />
+      <path className="od-ic" d="M189 496 A11 11 0 0 1 211 496 M200 496 L206 485" />
+
+      {/* shield that stops the first pill at the allergy gate */}
+      <path
+        className="od-shield"
+        d="M200 276 L236 290 V322 C236 348 218 364 200 372 C182 364 164 348 164 322 V290 Z"
+      />
+
+      {/* first pill (stopped) */}
+      <g className="od-p1">
+        <g transform="translate(200 60)">
+          <rect x="-13" y="-26" width="26" height="52" rx="13" fill="#5EEAD4" />
+          <rect x="-13" y="0" width="26" height="26" rx="13" fill="#E8F5F1" />
+          <rect x="-13" y="0" width="26" height="14" fill="#E8F5F1" />
+          <rect x="-13" y="-14" width="26" height="14" fill="#5EEAD4" />
+        </g>
+      </g>
+
+      {/* safer pill (passes every gate) */}
+      <g className="od-p2">
+        <g transform="translate(200 60)">
+          <rect x="-13" y="-26" width="26" height="52" rx="13" fill="#86EFAC" />
+          <rect x="-13" y="0" width="26" height="26" rx="13" fill="#FFFFFF" />
+          <rect x="-13" y="0" width="26" height="14" fill="#FFFFFF" />
+          <rect x="-13" y="-14" width="26" height="14" fill="#86EFAC" />
+        </g>
+      </g>
+
+      {/* final check mark */}
+      <g className="od-done">
+        <circle cx="200" cy="590" r="24" fill="#14532D" stroke="#4ADE80" strokeWidth="3" />
+        <path d="M189 590 L197 598 L212 582" fill="none" stroke="#4ADE80" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------
 // LOGIN COMPONENT
 // ---------------------------------------------------------------------
 export default function Login() {
@@ -96,9 +183,23 @@ export default function Login() {
       const data = await login(email, password);
       loginAuth(data);
       addToast(`Welcome back, ${data.user.name}`, 'success');
-      navigate('/prescribe');
+      navigate(data.user.role === 'patient' ? '/portal' : '/prescribe');
     } catch (err) {
       setApiError(err.message || 'Invalid email or password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoPatient = async () => {
+    setLoading(true);
+    try {
+      const data = await login('patient1@onedose.local', 'patient123');
+      loginAuth(data);
+      addToast('Signed in as a demo patient', 'success');
+      navigate('/portal');
+    } catch (err) {
+      setApiError('Could not sign in with demo credentials');
     } finally {
       setLoading(false);
     }
@@ -138,7 +239,7 @@ export default function Login() {
       >
         {/* Top brand header */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '48px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 0 }}>
             <div
               style={{
                 width: '36px',
@@ -158,227 +259,11 @@ export default function Login() {
             </span>
           </div>
 
-          <div
-            style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: '#86B5A9',
-              marginBottom: '16px',
-            }}
-          >
-            A CLEARER CLINICAL PICTURE
-          </div>
-
-          <h1
-            style={{
-              fontSize: '46px',
-              fontWeight: 300,
-              lineHeight: 1.15,
-              letterSpacing: '-0.03em',
-              color: '#FFFFFF',
-              margin: '0 0 20px 0',
-            }}
-          >
-            One patient.<br />
-            Every ingredient.<br />
-            An informed decision.
-          </h1>
-
-          <p
-            style={{
-              fontSize: '15px',
-              lineHeight: 1.6,
-              color: 'rgba(255, 255, 255, 0.7)',
-              maxWidth: '430px',
-              margin: 0,
-            }}
-          >
-            Bring medicines, patient context and transparent safety checks into one considered view.
-          </p>
         </div>
 
-        {/* Central Illustration: Concentric rings with 4 node tiles */}
-        <div style={{ position: 'relative', height: '320px', margin: '20px auto', width: '100%', maxWidth: '420px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Concentric rings */}
-          <div
-            style={{
-              position: 'absolute',
-              width: '320px',
-              height: '320px',
-              borderRadius: '50%',
-              border: '1px solid var(--forest-line)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              width: '240px',
-              height: '240px',
-              borderRadius: '50%',
-              border: '1px solid var(--forest-line)',
-              pointerEvents: 'none',
-            }}
-          />
-
-          {/* Radiating spoke lines */}
-          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-            <line x1="210" y1="160" x2="210" y2="40" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-            <line x1="210" y1="160" x2="210" y2="280" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-            <line x1="210" y1="160" x2="60" y2="160" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-            <line x1="210" y1="160" x2="360" y2="160" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-          </svg>
-
-          {/* Top Node: Database */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              backgroundColor: 'var(--forest-2)',
-              border: '1px solid var(--forest-line)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
-              <ellipse cx="12" cy="5" rx="9" ry="3" />
-              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-              <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
-            </svg>
-          </div>
-
-          {/* Left Node: Capsule */}
-          <div
-            style={{
-              position: 'absolute',
-              left: '40px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              backgroundColor: 'var(--forest-2)',
-              border: '1px solid var(--forest-line)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <CapsuleIconWhite size={18} />
-          </div>
-
-          {/* Right Node: Shield with check */}
-          <div
-            style={{
-              position: 'absolute',
-              right: '40px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              backgroundColor: 'var(--forest-2)',
-              border: '1px solid var(--forest-line)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-          </div>
-
-          {/* Bottom Node: Heart with pulse */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              backgroundColor: 'var(--forest-2)',
-              border: '1px solid var(--forest-line)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-              <path d="M3.22 12H9.5l1.5-3 2 6.5 1.5-3.5h6.28" />
-            </svg>
-          </div>
-
-          {/* Center Card: "A complete patient view" */}
-          <div
-            style={{
-              width: '230px',
-              height: '92px',
-              backgroundColor: '#FFFFFF',
-              borderRadius: '12px',
-              boxShadow: '0 12px 28px rgba(0,0,0,0.22)',
-              padding: '12px 14px',
-              zIndex: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: '#E6F6F4',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="2">
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
-                  A complete patient view
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
-                  Context before a decision
-                </div>
-              </div>
-            </div>
-
-            {/* Skeleton lines */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ width: '85%', height: '5px', backgroundColor: '#E2E8F0', borderRadius: '3px' }} />
-              <div style={{ width: '55%', height: '5px', backgroundColor: '#EDF2F7', borderRadius: '3px' }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom panel footer note */}
-        <div style={{ borderTop: '1px solid var(--forest-line)', paddingTop: '20px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF', marginBottom: '4px' }}>
-            Database-led. Clinician-decided.
-          </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.65)', lineHeight: 1.5 }}>
-            SQL evaluates the rules. AI only phrases existing alert explanations. You retain the final decision.
-          </div>
+        {/* Safety pipeline animation (replaces the old illustration and text) */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <SafetyPipelineAnimation />
         </div>
       </div>
 
@@ -446,7 +331,7 @@ export default function Login() {
               marginBottom: '6px',
             }}
           >
-            Welcome back, clinician.
+            Welcome back.
           </h2>
           <p style={{ fontSize: '14px', color: 'var(--muted)', marginBottom: '28px' }}>
             Sign in to your OneDose workspace.
@@ -466,7 +351,7 @@ export default function Login() {
             {/* Work email field */}
             <div style={{ marginBottom: '18px' }}>
               <label htmlFor="login-email" className="form-label">
-                Work email
+                Email
               </label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -475,7 +360,7 @@ export default function Login() {
                   className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@hospital.example"
+                  placeholder="name@example.com"
                   style={{ paddingRight: '38px' }}
                   aria-describedby={errors.email ? 'email-error' : undefined}
                 />
@@ -612,6 +497,15 @@ export default function Login() {
           >
             Enter as demo clinician
           </button>
+          <button
+            type="button"
+            className="btn-od-secondary"
+            onClick={handleDemoPatient}
+            disabled={loading}
+            style={{ width: '100%', height: '44px', marginBottom: '20px' }}
+          >
+            Enter as demo patient
+          </button>
 
           {/* Authorised notice box */}
           <div
@@ -628,7 +522,7 @@ export default function Login() {
               <LockIcon size={16} color="var(--login-brand)" />
             </div>
             <div style={{ fontSize: '12px', color: 'var(--login-brand)', lineHeight: 1.45 }}>
-              For authorised clinicians. Demo access uses synthetic records only; do not enter real patient information.
+              For authorised users. Demo access uses synthetic records only; do not enter real patient information.
             </div>
           </div>
         </div>

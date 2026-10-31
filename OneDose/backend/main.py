@@ -1,6 +1,6 @@
 # File: backend/main.py
 # Owner: Bhavya  (only the owner edits this file)
-# Purpose: Start the FastAPI app: enable CORS, register the route files and the auth router, add a health-check endpoint.
+# Purpose: Start the FastAPI app: enable CORS, register the route files (incl. the patient portal) and the auth router, add a health-check endpoint.
 # Inputs: Settings from config.py.
 # Outputs: A running API server.
 # Depends on: config.py, auth.py, routes/*.py
@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 import auth
 import db
 from config import settings
-from routes import analytics, patients, prescriptions
+from routes import analytics, patients, portal, prescriptions
 
 log = logging.getLogger("onedose")
 
@@ -39,6 +39,8 @@ app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(prescriptions.router)
 app.include_router(analytics.router)
+app.include_router(portal.router)
+app.include_router(portal.staff_router)
 
 
 @app.exception_handler(psycopg.Error)

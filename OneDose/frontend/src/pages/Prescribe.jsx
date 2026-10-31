@@ -5,6 +5,7 @@ import PatientCard from '../components/PatientCard.jsx';
 import BrandSearch from '../components/BrandSearch.jsx';
 import AlertPanel from '../components/AlertPanel.jsx';
 import SqlPeek from '../components/SqlPeek.jsx';
+import BeforeComingIn from '../components/BeforeComingIn.jsx';
 import { scanCard, getLatestScan, checkPrescription, createPrescription, overrideAlert, getPatient } from '../api.js';
 import { validatePrescription, validateCardId } from '../validators.js';
 
@@ -293,6 +294,7 @@ export default function Prescribe() {
 
           {/* Patient Card Profile */}
           <PatientCard patient={selectedPatient} />
+
         </div>
 
         {/* ============================================================= */}
@@ -403,6 +405,11 @@ export default function Prescribe() {
             </button>
           </div>
 
+          {/* Medicines the patient reported themselves (unverified, outside the safety checks) */}
+          {selectedPatient && !isPharmacist && (
+            <BeforeComingIn patientId={selectedPatient.patient_id || selectedPatient.id} />
+          )}
+
           {/* Results Action Card */}
           {hasChecked && (
             <div>
@@ -490,11 +497,6 @@ export default function Prescribe() {
           />
         </div>
       </div>
-
-      {/* ============================================================= */}
-      {/* BOTTOM DRAWER: SQL PEEK                                       */}
-      {/* ============================================================= */}
-      <SqlPeek sql={sqlData} />
     </div>
   );
 }

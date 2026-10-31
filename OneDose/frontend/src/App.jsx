@@ -5,6 +5,15 @@ import Login from './pages/Login.jsx';
 import Prescribe from './pages/Prescribe.jsx';
 import PatientHistory from './pages/PatientHistory.jsx';
 import Analytics from './pages/Analytics.jsx';
+import PatientNavbar from './components/PatientNavbar.jsx';
+import PortalHome from './pages/portal/PortalHome.jsx';
+import PortalMedicines from './pages/portal/PortalMedicines.jsx';
+import PortalSchedule from './pages/portal/PortalSchedule.jsx';
+import PortalIngredients from './pages/portal/PortalIngredients.jsx';
+import PortalHealth from './pages/portal/PortalHealth.jsx';
+import PortalSymptoms from './pages/portal/PortalSymptoms.jsx';
+import PortalSelfReported from './pages/portal/PortalSelfReported.jsx';
+import PortalPrivacy from './pages/portal/PortalPrivacy.jsx';
 
 // ---------------------------------------------------------------------
 // CONTEXT DEFINITION
@@ -66,6 +75,10 @@ function Navbar() {
 
   if (location.pathname === '/login') {
     return null;
+  }
+
+  if (auth?.user?.role === 'patient') {
+    return <PatientNavbar name={auth.user.name} logout={logout} />;
   }
 
   const role = auth?.user?.role || 'clinician';
@@ -138,12 +151,38 @@ function Navbar() {
 // ---------------------------------------------------------------------
 // PROTECTED ROUTE WRAPPER
 // ---------------------------------------------------------------------
-function ProtectedRoute({ children }) {
+const STAFF = ['clinician', 'pharmacist', 'admin'];
+const PORTAL_PAGES = [
+  ['/portal', PortalHome],
+  ['/portal/medicines', PortalMedicines],
+  ['/portal/schedule', PortalSchedule],
+  ['/portal/ingredients', PortalIngredients],
+  ['/portal/health', PortalHealth],
+  ['/portal/symptoms', PortalSymptoms],
+  ['/portal/self-reported', PortalSelfReported],
+  ['/portal/privacy', PortalPrivacy],
+];
+
+function homeFor(role) {
+  return role === 'patient' ? '/portal' : '/prescribe';
+}
+
+// roles: optional list of roles allowed on this page; anyone else is sent to their own home page
+function ProtectedRoute({ children, roles }) {
   const { auth } = useApp();
   if (!auth?.token) {
     return <Navigate to="/login" replace />;
   }
+  const role = auth?.user?.role;
+  if (roles && !roles.includes(role)) {
+    return <Navigate to={homeFor(role)} replace />;
+  }
   return children;
+}
+
+function HomeRedirect() {
+  const { auth } = useApp();
+  return <Navigate to={auth?.token ? homeFor(auth?.user?.role) : '/login'} replace />;
 }
 
 // ---------------------------------------------------------------------
@@ -202,7 +241,7 @@ export default function App() {
               <Route
                 path="/prescribe"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute roles={STAFF}>
                     <Prescribe />
                   </ProtectedRoute>
                 }
@@ -210,7 +249,7 @@ export default function App() {
               <Route
                 path="/history/:patientId?"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute roles={STAFF}>
                     <PatientHistory />
                   </ProtectedRoute>
                 }
@@ -218,12 +257,23 @@ export default function App() {
               <Route
                 path="/analytics"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute roles={STAFF}>
                     <Analytics />
                   </ProtectedRoute>
                 }
               />
-              <Route path="*" element={<Navigate to="/prescribe" replace />} />
+              {PORTAL_PAGES.map(([path, Page]) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    <ProtectedRoute roles={['patient']}>
+                      <Page />
+                    </ProtectedRoute>
+                  }
+                />
+              ))}
+              <Route path="*" element={<HomeRedirect />} />
             </Routes>
           </main>
 
